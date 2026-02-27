@@ -1,0 +1,46 @@
+# -------------------------
+# Root / Monorepo ignores
+# -------------------------
+
+# dependencies
+/node_modules
+**/node_modules
+
+# lockfiles (if you prefer yarn, ignore package-locks)
+/**/package-lock.json
+
+# build / production
+/build
+/.next
+/out
+**/dist
+
+# coverage / testing
+/coverage
+**/coverage
+
+# misc
+.DS_Store
+*.pem
+report.*.json
+
+# debugging
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.vscode/*-debug-profile
+
+# env files
+.env
+**/.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Vercel / deployment
+.vercel
+
+# next-pwa service workers
+/public/workbox-*.js
+/public/sw.js
