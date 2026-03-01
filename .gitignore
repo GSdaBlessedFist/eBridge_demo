@@ -3,20 +3,19 @@
 # -------------------------
 
 # dependencies
-/node_modules
 **/node_modules
 
-# lockfiles (if you prefer yarn, ignore package-locks)
-/**/package-lock.json
+# lockfiles
+**/package-lock.json
 
-# build / production
-/build
-/.next
-/out
-**/dist
+# Next.js
+**/.next/
+
+# Build output
+dist/
+build/
 
 # coverage / testing
-/coverage
 **/coverage
 
 # misc
@@ -31,12 +30,7 @@ yarn-error.log*
 .vscode/*-debug-profile
 
 # env files
-.env
-**/.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+**/.env*
 
 # Vercel / deployment
 .vercel
