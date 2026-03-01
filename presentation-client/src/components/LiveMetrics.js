@@ -15,7 +15,7 @@ export default function LiveMetrics({ nodes, materials }) {
     const maxHeight = 2
 
     useFrame(() => {
-        const percentages = useVoteStore.getState().getPercentages()
+        const percentages = useVoteStore.getState().percentages
 
         Object.keys(barRefs).forEach((color) => {
             currentScale[color] += (percentages[color] - currentScale[color]) * lerpFactor
@@ -24,17 +24,10 @@ export default function LiveMetrics({ nodes, materials }) {
             }
         })
 
-        // Trigger special effect if everyone voted the same
-        // material.liveDataLight will glow winning color
-        if (useVoteStore.getState().allSameColor()) {
-            // Example: change bar color or glow
-            Object.keys(barRefs).forEach((color) => {
-                barRefs[color].current.material.emissive.setHex(0xffff00) // glow yellow
-            })
-        } else {
-            Object.keys(barRefs).forEach((color) => {
-                barRefs[color].current.material.emissive.setHex(0x000000) // reset glow
-            })
+        const consensusColor = useVoteStore.getState().consensusColor
+
+        if (consensusColor) {
+            // trigger special effect using consensusColor
         }
     })
 

@@ -1,0 +1,27 @@
+{
+  "name": "e_bridge",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev:server": "npm run dev --prefix server",
+    "dev:presentation": "npm run dev --prefix presentation-client",
+    "dev:audience": "npm run dev --prefix audience-client",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:presentation\" \"npm run dev:audience\"",
+    "devTemp": "concurrently \"npm run dev:server\" \"npm run dev:presentation\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GSdaBlessedFist/eBridge_demo.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/GSdaBlessedFist/eBridge_demo/issues"
+  },
+  "homepage": "https://github.com/GSdaBlessedFist/eBridge_demo#readme",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

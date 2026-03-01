@@ -3,9 +3,10 @@
 import { useEffect, useRef } from 'react'
 import { useVoteStore } from '../stores/useVoteStore'
 import { useFrame } from '@react-three/fiber'
+import { usePresentationSocket } from '@/hooks/usePresentationSocket'
 
 export default function VoteButtons({ nodes, materials }) {
-    const incrementVote = useVoteStore((state) => state.incrementVote)
+    const { castVote } = usePresentationSocket("room-123")
 
     // refs for the original GLTF mesh instances
     const refs = {
@@ -50,7 +51,8 @@ export default function VoteButtons({ nodes, materials }) {
     })
 
     const handleClick = (color) => {
-        incrementVote(color)
+        castVote(color) // send vote to server
+        console.log("Emitting vote:", color)
 
         // ensure exclusive press state
         Object.keys(pressed.current).forEach((c) => (pressed.current[c] = false))
