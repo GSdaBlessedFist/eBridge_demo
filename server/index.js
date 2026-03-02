@@ -3,7 +3,11 @@ const express = require('express')
 const http = require('http')
 const { Server } = require('socket.io')
 const rateLimiter = require('./rateLimiter')
-const { getRoom } = require('./rooms')
+const { getRoom,
+    registerVote,
+    calculatePercentages,
+    allSameColor,
+    resetVotes } = require('./rooms')
 
 const app = express()
 const server = http.createServer(app)
@@ -26,9 +30,9 @@ io.on('connection', (socket) => {
         // Send initial state if room exists
         const room = getRoom(roomId)
         if (room) {
-            socket.emit('voteUpdate', {
+            socket.emit('castVote', {
                 votes: room.votes,
-                percentages: room.getPercentages(),
+                percentages: calculatePercentages(room),
                 totalVoters: room.totalVoters,
                 consensusColor: room.consensusColor || null
             })
@@ -44,17 +48,17 @@ io.on('connection', (socket) => {
         if (!room) return
 
         // Register the vote
-        room.registerVote(socket.id, color)
+        registerVote(roomId, socket.id, color)
 
         // Broadcast updated vote state
         io.to(roomId).emit('voteUpdate', {
             votes: room.votes,
-            percentages: room.getPercentages(),
+            percentages: calculatePercentages(room),
             totalVoters: room.totalVoters
         })
 
         // Check consensus
-        const consensusColor = room.allSameColor()
+        const consensusColor = allSameColor(room)
         if (consensusColor) {
             io.to(roomId).emit('consensusReached', consensusColor)
         } else {
@@ -62,11 +66,46 @@ io.on('connection', (socket) => {
         }
     })
 
-    // Handle disconnect
+    // 2026-03-02 00:30
     socket.on('disconnect', () => {
         console.log('Client disconnected:', socket.id)
-        // Optionally remove voter from all rooms
-        // rooms.forEach(r => r.removeVoter(socket.id))
+
+        // socket.rooms includes:
+        // - the socket's own ID
+        // - any joined rooms
+        for (const roomId of socket.rooms) {
+            if (roomId === socket.id) continue
+
+            const room = getRoom(roomId)
+
+            removeVoter(roomId, socket.id)
+
+            io.to(roomId).emit('voteUpdate', {
+                votes: room.votes,
+                percentages: calculatePercentages(room),
+                totalVoters: Object.keys(room.voters).length
+            })
+
+            const consensusColor = allSameColor(room)
+            if (consensusColor) {
+                io.to(roomId).emit('consensusReached', consensusColor)
+            } else {
+                io.to(roomId).emit('consensusReset')
+            }
+        }
+    })
+
+    // 2026-03-02 00:18
+    socket.on('resetVotes', ({ roomId }) => {
+        const room = resetVotes(roomId)
+
+        io.to(roomId).emit('voteUpdate', {
+            votes: room.votes,
+            percentages: calculatePercentages(room),
+            totalVoters: Object.keys(room.voters).length
+        })
+
+        io.to(roomId).emit('consensusReset')
     })
 })
 

@@ -13,6 +13,9 @@ function createRoom(roomId) {
 }
 
 function getRoom(roomId) {
+    if (!rooms.has(roomId)) {
+        return createRoom(roomId)
+    }
     return rooms.get(roomId)
 }
 
@@ -64,10 +67,31 @@ function calculatePercentages(room) {
     return percentages
 }
 
+// 2026-03-01 23:55
+function allSameColor(room) {
+    const voters = Object.values(room.voters)
+    if (voters.length === 0) return null
+
+    const firstColor = voters[0]
+    for (const color of voters) {
+        if (color !== firstColor) return null
+    }
+    return firstColor
+}
+
+function resetVotes(roomId) {
+    const room = getRoom(roomId)
+    room.votes = {}
+    room.voters = {}
+    return room
+}
+
 module.exports = {
     createRoom,
     getRoom,
     registerVote,
     removeVoter,
-    calculatePercentages
+    calculatePercentages,
+    allSameColor,
+    resetVotes
 }
