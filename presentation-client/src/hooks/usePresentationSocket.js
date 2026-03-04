@@ -1,25 +1,29 @@
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { io } from "socket.io-client"
 import { useVoteStore } from "../stores/useVoteStore"
-let socket
-let currentRoomId // track current room globally
+
+
 export const usePresentationSocket = (roomId) => {
+    const socketRef = useRef(null)
+
     const setVoteState = useVoteStore((state) => state.setVoteState)
     const setConsensus = useVoteStore((state) => state.setConsensus)
     const resetConsensus = useVoteStore((state) => state.resetConsensus)
 
     useEffect(() => {
-        socket = io("http://localhost:3001")
-        currentRoomId = roomId
-        socket.emit("joinPresentation", roomId)
-        socket.on("voteUpdate", (payload) => {
-            console.log("Received voteUpdate:", payload)
+        socketRef.current = io("http://localhost:3001")
+
+        socketRef.current.emit("joinPresentation", roomId)
+
+        socketRef.current.on("voteUpdate", (payload) => {
             setVoteState(payload)
         })
-        socket.on("consensusReached", (color) => {
+
+        socketRef.current.on("consensusReached", (color) => {
             setConsensus(color)
         })
-        socket.on("consensusReset", () => {
+
+        socketRef.current.on("consensusReset", () => {
             resetConsensus()
         })
 
@@ -36,13 +40,14 @@ export const usePresentationSocket = (roomId) => {
 
             if (keyBuffer === "reset") {
                 console.log("Reset sequence detected")
-                socket.emit("resetVotes", { roomId })
+                socketRef.current.emit("resetVotes", { roomId })
                 keyBuffer = ""
             }
         }
+        window.addEventListener("keydown", handleKeyDown)
         return () => {
-            window.addEventListener("keydown", handleKeyDown)
-            socket.disconnect()
+            window.removeEventListener("keydown", handleKeyDown)
+            socketRef.current.disconnect()
         }
 
 
@@ -52,8 +57,8 @@ export const usePresentationSocket = (roomId) => {
     // Function to emit votes
     // -----------------------------
     const castVote = (color) => {
-        if (!socket || !currentRoomId) return
-        socket.emit("castVote", { roomId: currentRoomId, color })
+        if (!socketRef.current) return
+        socketRef.current.emit("castVote", { roomId, color })
     }
     // Return castVote so components can use it
     return { castVote }

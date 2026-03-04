@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from "three"
 import { useEffect, useRef } from 'react'
 import { useVoteStore } from '../stores/useVoteStore'
+import colorMap from './colorMap'
 
 export default function LiveMetrics({ nodes, materials }) {
     const barRefs = {
@@ -56,15 +57,13 @@ export default function LiveMetrics({ nodes, materials }) {
             mesh.scale.y = currentScale[color] * maxHeight
 
             // --- Emissive animation ---
-            // Base color for each bar
-            const baseColor = new THREE.Color(color)
 
             // Intensity factor: 1 for consensus, otherwise scale by percentage
             let intensityFactor = targetScale
             if (consensusColor === color) intensityFactor = 1
 
             // Apply maxEmissive cap
-            const finalColor = baseColor.clone().multiplyScalar(intensityFactor * maxEmissive)
+            const finalColor = colorMap[color].clone().multiplyScalar(intensityFactor * maxEmissive)
 
             mesh.material.emissive.copy(finalColor)
             mesh.material.needsUpdate = true
@@ -74,13 +73,13 @@ export default function LiveMetrics({ nodes, materials }) {
     return (
         <group name="LiveMetrics">
             <mesh ref={barRefs.red} geometry={nodes.liveMetricBar_1.geometry} position={[-0.001, 1.097, 0.303]} castShadow receiveShadow>
-                <meshStandardMaterial attach="material" color="red" metalness={0.6} roughness={0.4} emissive="red" emissiveIntensity={0} />
+                <meshStandardMaterial attach="material" color={colorMap.red} metalness={0.6} roughness={0.4} emissive={colorMap.red} emissiveIntensity={0} />
             </mesh>
             <mesh ref={barRefs.green} geometry={nodes.liveMetricBar_2.geometry} position={[-0.001, 1.097, -0.134]} castShadow receiveShadow>
-                <meshStandardMaterial attach="material" color="green" metalness={0.6} roughness={0.4} emissive="green" emissiveIntensity={0} />
+                <meshStandardMaterial attach="material" color={colorMap.green} metalness={0.6} roughness={0.4} emissive={colorMap.green} emissiveIntensity={0} />
             </mesh>
             <mesh ref={barRefs.blue} geometry={nodes.liveMetricBar_3.geometry} position={[-0.001, 1.097, -0.57]} castShadow receiveShadow>
-                <meshStandardMaterial attach="material" color="blue" metalness={0.6} roughness={0.4} emissive="blue" emissiveIntensity={0} />
+                <meshStandardMaterial attach="material" color={colorMap.blue} metalness={0.6} roughness={0.4} emissive={colorMap.blue} emissiveIntensity={0} />
             </mesh>
         </group>
     )

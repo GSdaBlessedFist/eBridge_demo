@@ -1,30 +1,37 @@
 
-// 2026-02-24 14:45
-import { useEffect, useRef } from 'react'
+// 2026-03-03 21:15
+import { useRef } from 'react'
 import { useVoteStore } from '../stores/useVoteStore'
 import { useFrame } from '@react-three/fiber'
 import { usePresentationSocket } from '@/hooks/usePresentationSocket'
+import colorMap from './colorMap'
 
 export default function VoteButtons({ nodes, materials }) {
     const { castVote } = usePresentationSocket("room-123")
 
-    // refs for the original GLTF mesh instances
+    // refs for GLTF meshes
     const refs = {
         red: useRef(),
         green: useRef(),
         blue: useRef(),
     }
 
-    // morph state
+    // morph & flash state
     const pressed = useRef({
         red: false,
         green: false,
         blue: false,
     })
 
-    const lerpFactor = .136
+    const flash = useRef({
+        red: false,
+        green: false,
+        blue: false,
+    })
 
-    // smoothly animate morph targets each frame
+    const lerpFactor = 0.136
+    const flashDuration = 150
+
     const animateMorph = (mesh, isPressed) => {
         if (!mesh?.morphTargetInfluences) return
         const index = mesh.morphTargetDictionary['Key 1']
@@ -39,57 +46,43 @@ export default function VoteButtons({ nodes, materials }) {
             const mesh = refs[color].current
             if (!mesh) return
 
-            // Animate morph target
+            // Morph target animation
             animateMorph(mesh, pressed.current[color])
 
-            // Animate emissive intensity while keeping base color
-            const targetIntensity = pressed.current[color] ? 2 : 1 // 2 = brighter, 1 = normal
-            mesh.material.emissiveIntensity +=
-                (targetIntensity - mesh.material.emissiveIntensity) * 0.1
+            // Emissive: base neutral, flash to bar color if pressed
+            const targetColor = flash.current[color] ? colorMap[color] : materials.buttonBorder.color
+            mesh.material.color.lerp(mesh.material.color.set(targetColor), 0.1)
+
+            // Emissive intensity
+            const targetIntensity = flash.current[color] ? 2 : 0.5
+            mesh.material.emissiveIntensity += (targetIntensity - mesh.material.emissiveIntensity) * 0.1
             mesh.material.needsUpdate = true
         })
     })
 
     const handleClick = (color) => {
-        castVote(color) // send vote to server
+        castVote(color)
         console.log("Emitting vote:", color)
 
-        // ensure exclusive press state
+        // reset morph & flash states
         Object.keys(pressed.current).forEach((c) => (pressed.current[c] = false))
+        Object.keys(flash.current).forEach((c) => (flash.current[c] = false))
+
         pressed.current[color] = true
-        // release after 150ms
+        flash.current[color] = true
+
+        // release after flashDuration
         setTimeout(() => {
             pressed.current[color] = false
-        }, 150)
+            flash.current[color] = false
+        }, flashDuration)
     }
 
     return (
         <group name="Module_UIButtons">
-            <primitive
-                ref={refs.red}
-                object={nodes.uiButton_1}
-                onClick={(e) => {
-                    e.stopPropagation()
-                    handleClick('red')
-                }}
-            />
-            <primitive
-                ref={refs.green}
-                object={nodes.uiButton_2}
-                onClick={(e) => {
-                    e.stopPropagation()
-                    handleClick('green')
-                }}
-            />
-            <primitive
-                ref={refs.blue}
-                object={nodes.uiButton_3}
-                onClick={(e) => {
-                    e.stopPropagation()
-                    handleClick('blue')
-                }}
-            />
+            <primitive ref={refs.red} object={nodes.uiButton_1} onClick={(e) => { e.stopPropagation(); handleClick('red') }} />
+            <primitive ref={refs.green} object={nodes.uiButton_2} onClick={(e) => { e.stopPropagation(); handleClick('green') }} />
+            <primitive ref={refs.blue} object={nodes.uiButton_3} onClick={(e) => { e.stopPropagation(); handleClick('blue') }} />
         </group>
     )
 }
-

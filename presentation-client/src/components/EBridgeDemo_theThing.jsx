@@ -113,7 +113,7 @@ export default function Model(props) {
     buttonRefs.forEach((ref, i) => {
       if (!ref.current) return
 
-      const target = hoveredIndex === i ? 5 : 1
+      const target = hoveredIndex === i ? 17 : 1
 
       ref.current.material.emissiveIntensity =
         THREE.MathUtils.lerp(ref.current.material.emissiveIntensity, target, 0.1)
@@ -130,8 +130,8 @@ export default function Model(props) {
       <group name="Scene">
         <group name="Scene_Collection" userData={{ name: 'Scene Collection' }}>
           <group name="Cameras" userData={{ name: 'Cameras' }}>
-            <PerspectiveCamera name="demoMenu_Camera_1" makeDefault={true} far={100} near={0.1} fov={22.895} position={[-3.449, 4.263, 4.181]} rotation={[-0.724, -0.066, -0.162]} userData={{ name: 'demoMenu_Camera' }} />
-            <PerspectiveCamera name="liveMetrics_Camera_1" makeDefault={false} far={1000} near={0.1} fov={8.273} position={[8.579, -0.557, 5.125]} rotation={[0.37, 0.977, -0.311]} userData={{ name: 'liveMetrics_Camera' }} />
+            <PerspectiveCamera name="demoMenu_Camera_1" makeDefault={false} far={100} near={0.1} fov={22.895} position={[-3.449, 4.263, 4.181]} rotation={[-0.724, -0.066, -0.162]} userData={{ name: 'demoMenu_Camera' }} />
+            <PerspectiveCamera name="liveMetrics_Camera_1" makeDefault={true} far={1000} near={0.1} fov={8.273} position={[8.579, -0.557, 5.125]} rotation={[0.37, 0.977, -0.311]} userData={{ name: 'liveMetrics_Camera' }} />
             <PerspectiveCamera name="scale_Camera_1" makeDefault={false} far={1000} near={0.1} fov={22.895} position={[1.638, 0.359, -2.084]} rotation={[-3.072, 0.379, 3.116]} userData={{ name: 'scale_Camera' }} />
             <PerspectiveCamera name="ROAM" makeDefault={false} far={1000} near={0.1} fov={22.895} position={[4.489, 3.651, 5.979]} rotation={[-0.452, 0.539, 0.244]} userData={{ name: 'ROAM' }} />
           </group>
@@ -171,7 +171,7 @@ export default function Model(props) {
               <mesh name="demoScreenTextPlane" castShadow receiveShadow geometry={nodes.demoScreenTextPlane.geometry} material={materials.demoScreenGlass} userData={{ name: 'demoScreenTextPlane' }} />
             </group>
             <group name="Module_UIButtons" userData={{ name: 'Module_UIButtons' }}>
-              <mesh name="uiButtonsBorder" castShadow receiveShadow geometry={nodes.uiButtonsBorder.geometry} material={materials.uiButtonsBorder} userData={{ name: 'uiButtonsBorder' }}>
+              <mesh name="uiButtonsBorder" castShadow receiveShadow geometry={nodes.uiButtonsBorder.geometry} material={materials.buttonBorder} userData={{ name: 'uiButtonsBorder' }}>
                 {/* <mesh name="uiButton_1" castShadow receiveShadow geometry={nodes.uiButton_1.geometry} material={materials.uiButton_1} morphTargetDictionary={nodes.uiButton_1.morphTargetDictionary} morphTargetInfluences={nodes.uiButton_1.morphTargetInfluences} userData={{ targetNames: ['Key 1'], name: 'uiButton_1' }} />
                 <mesh name="uiButton_2" castShadow receiveShadow geometry={nodes.uiButton_2.geometry} material={materials.uiButton_2} morphTargetDictionary={nodes.uiButton_2.morphTargetDictionary} morphTargetInfluences={nodes.uiButton_2.morphTargetInfluences} userData={{ targetNames: ['Key 1'], name: 'uiButton_2' }} />
                 <mesh name="uiButton_3" castShadow receiveShadow geometry={nodes.uiButton_3.geometry} material={materials.uiButton_3} morphTargetDictionary={nodes.uiButton_3.morphTargetDictionary} morphTargetInfluences={nodes.uiButton_3.morphTargetInfluences} userData={{ targetNames: ['Key 1'], name: 'uiButton_3' }} /> */}
