@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import * as THREE from "three"
 import { useGLTF, PerspectiveCamera } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
@@ -14,8 +14,10 @@ export default function Model(props) {
   const demoTextsRef = useRef(); // name="DemoTexts"
   const buttonRefs = [useRef(), useRef(), useRef(), useRef()]
 
-  const [textHovered, setTextHovered] = useState([false, false, false, false])
-  const [buttonHovered, setButtonHovered] = useState([false, false, false, false])
+  const baseYRef = useRef([])
+  const phaseRef = useRef([])
+
+  const [hoveredIndex, setHoveredIndex] = useState(null)
   const [selectedButton, setSelectedButton] = useState(null); // null or 0-3
 
   const textMaterials = [
@@ -25,72 +27,113 @@ export default function Model(props) {
     useTextMaterial(0xffffff, 0xffaa00),
   ]
 
-  // Store base positions and phase for sway
   useEffect(() => {
-    if (!demoTextsRef.current) return
-    const PHASE = -0.6
-    demoTextsRef.current.children.forEach((child, i) => {
-      child.userData.baseX = child.position.x
-      child.userData.baseY = child.position.y
-      child.userData.phase = i * PHASE
+    const liveMetricsMat = materials.live_metrics
+    const assemblyMat = materials.assembly
+    const configurationMat = materials.configuration
+    const scaleMat = materials.scale
+    const demoTextMaterials = [
+      liveMetricsMat,
+      assemblyMat,
+      configurationMat,
+      scaleMat
+    ]
+
+    demoTextMaterials.forEach(mat => {
+      if (mat.map) {
+        mat.map.anisotropy = gl.capabilities.getMaxAnisotropy()
+        mat.map.minFilter = THREE.LinearMipMapLinearFilter
+        mat.map.magFilter = THREE.LinearFilter
+        mat.map.needsUpdate = true
+      }
     })
-    // Clone button materials for independent emission
-    buttonRefs.forEach((ref) => {
-      if (!ref.current) return
-      ref.current.material = ref.current.material.clone()
-      ref.current.material.emissive = new THREE.Color(0xffaa00)
-      ref.current.material.emissiveIntensity = 1.3
-    })
 
+    //Powerbutton
+    const powerButtonMat = materials.powerButton
 
-  }, [])
-
-  //Powerbutton
-  useEffect(() => {
-    const mat = materials.powerButton
-
-    if (mat.map) {
-      mat.map.anisotropy = gl.capabilities.getMaxAnisotropy()
-      mat.map.minFilter = THREE.LinearMipMapLinearFilter
-      mat.map.magFilter = THREE.LinearFilter
-      mat.map.needsUpdate = true
+    if (powerButtonMat.map) {
+      powerButtonMat.map.anisotropy = gl.capabilities.getMaxAnisotropy()
+      powerButtonMat.map.minFilter = THREE.LinearMipMapLinearFilter
+      powerButtonMat.map.magFilter = THREE.LinearFilter
+      powerButtonMat.map.needsUpdate = true
     }
   }, [materials, gl])
+
+  ////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////
+
+
+  ////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////
+
+  useLayoutEffect(() => {
+    if (!demoTextsRef.current) return
+
+    const PHASE = -0.6
+
+    const children = demoTextsRef.current.children
+
+    baseYRef.current = children.map(c => c.position.y)
+    phaseRef.current = children.map((_, i) => i * PHASE)
+
+    console.log("Stored baseY:", baseYRef.current)
+    console.log("Stored phases:", phaseRef.current)
+  }, [])
+
+  //---------------------------------
 
   useFrame((state) => {
     const t = state.clock.getElapsedTime()
 
-    // Text motion along x-axis
-    demoTextsRef.current.children.forEach((child, i) => {
-      if (i !== selectedButton) return // pause motion if text is selected
-      //child.position.y = child.userData.baseY + Math.sin(t * 2 + child.userData.phase) * 0.025
-      child.position.y = Math.sin(t * 2.5) * 0.03
+    const demoTexts = demoTextsRef.current?.children
+    if (!demoTexts || demoTexts.length === 0) return
 
+    // Oscillation
+    demoTexts.forEach((text, i) => {
+      if (baseYRef.current[i] === undefined) return
+      text.position.y =
+        baseYRef.current[i] +
+        Math.sin(t * 2 + phaseRef.current[i]) * 0.025
     })
 
-    // Text hover glow removed (not used)
+    // DemoText hover glow
+    demoTexts.forEach((text, i) => {
+      if (!text.material) return
+
+      // Ensure emissive exists (for MeshStandardMaterial)
+      if (!text.material.emissive) text.material.emissive = new THREE.Color(0xffffff)
+      if (text.material.emissiveIntensity === undefined) text.material.emissiveIntensity = 1
+
+      const target = hoveredIndex === i ? 17 : 1
+      text.material.emissiveIntensity =
+        THREE.MathUtils.lerp(text.material.emissiveIntensity, target, 0.1)
+    })
 
     // Button hover glow
     buttonRefs.forEach((ref, i) => {
       if (!ref.current) return
-      const target = buttonHovered[i] ? 1.3 : .1
-      ref.current.material.emissiveIntensity = THREE.MathUtils.lerp(
-        ref.current.material.emissiveIntensity,
-        target,
-        0.1
-      )
+
+      const target = hoveredIndex === i ? 5 : 1
+
+      ref.current.material.emissiveIntensity =
+        THREE.MathUtils.lerp(ref.current.material.emissiveIntensity, target, 0.1)
     })
   })
 
+
+
+
+  //////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////
   return (
     <group {...props} dispose={null}>
       <group name="Scene">
         <group name="Scene_Collection" userData={{ name: 'Scene Collection' }}>
           <group name="Cameras" userData={{ name: 'Cameras' }}>
-            <PerspectiveCamera name="demoMenu_Camera_1" makeDefault={false} far={100} near={0.1} fov={22.895} position={[-3.449, 4.263, 4.181]} rotation={[-0.724, -0.066, -0.162]} userData={{ name: 'demoMenu_Camera' }} />
+            <PerspectiveCamera name="demoMenu_Camera_1" makeDefault={true} far={100} near={0.1} fov={22.895} position={[-3.449, 4.263, 4.181]} rotation={[-0.724, -0.066, -0.162]} userData={{ name: 'demoMenu_Camera' }} />
             <PerspectiveCamera name="liveMetrics_Camera_1" makeDefault={false} far={1000} near={0.1} fov={8.273} position={[8.579, -0.557, 5.125]} rotation={[0.37, 0.977, -0.311]} userData={{ name: 'liveMetrics_Camera' }} />
             <PerspectiveCamera name="scale_Camera_1" makeDefault={false} far={1000} near={0.1} fov={22.895} position={[1.638, 0.359, -2.084]} rotation={[-3.072, 0.379, 3.116]} userData={{ name: 'scale_Camera' }} />
-            <PerspectiveCamera name="ROAM" makeDefault={true} far={1000} near={0.1} fov={22.895} position={[4.489, 3.651, 5.979]} rotation={[-0.452, 0.539, 0.244]} userData={{ name: 'ROAM' }} />
+            <PerspectiveCamera name="ROAM" makeDefault={false} far={1000} near={0.1} fov={22.895} position={[4.489, 3.651, 5.979]} rotation={[-0.452, 0.539, 0.244]} userData={{ name: 'ROAM' }} />
           </group>
           <group name="THE_THING" userData={{ name: 'THE_THING' }}>
             <group name="Module_MainBody" userData={{ name: 'Module_MainBody' }}>
@@ -143,38 +186,32 @@ export default function Model(props) {
             </group>
             <group name="Module_DemoButtons" userData={{ name: 'Module_DemoButtons' }}>
               <mesh name="demoButtonsBorder" castShadow receiveShadow geometry={nodes.demoButtonsBorder.geometry} material={materials.demoButtonsBorder} userData={{ name: 'demoButtonsBorder' }} />
-              {['demoButton_1', 'demoButton_2', 'demoButton_3', 'demoButton_4'].map((name, i) => (
-                <mesh
-                  key={name}
-                  ref={buttonRefs[i]}
-                  geometry={nodes[name].geometry}
-                  material={materials[name]}
-                  morphTargetDictionary={nodes[name].morphTargetDictionary}
-                  morphTargetInfluences={nodes[name].morphTargetInfluences}
-                  onPointerOver={() => setButtonHovered(buttonHovered.map((_, j) => i === j))}
-                  onPointerOut={() => setButtonHovered([false, false, false, false])}
-                  onClick={() => setSelectedButton(i)}
-                />
-              ))}
+              <mesh name="demoButton_1" ref={buttonRefs[0]} castShadow receiveShadow geometry={nodes.demoButton_1.geometry} material={materials.demoButton_1} morphTargetDictionary={nodes.demoButton_1.morphTargetDictionary} morphTargetInfluences={nodes.demoButton_1.morphTargetInfluences} userData={{ targetNames: ['Key 1'], name: 'demoButton_1' }} />
+              <mesh name="demoButton_2" ref={buttonRefs[1]} castShadow receiveShadow geometry={nodes.demoButton_2.geometry} material={materials.demoButton_2} morphTargetDictionary={nodes.demoButton_2.morphTargetDictionary} morphTargetInfluences={nodes.demoButton_2.morphTargetInfluences} userData={{ targetNames: ['Key 1'], name: 'demoButton_2' }} />
+              <mesh name="demoButton_3" ref={buttonRefs[2]} castShadow receiveShadow geometry={nodes.demoButton_3.geometry} material={materials.demoButton_3} morphTargetDictionary={nodes.demoButton_3.morphTargetDictionary} morphTargetInfluences={nodes.demoButton_3.morphTargetInfluences} userData={{ targetNames: ['Key 1'], name: 'demoButton_3' }} />
+              <mesh name="demoButton_4" ref={buttonRefs[3]} castShadow receiveShadow geometry={nodes.demoButton_4.geometry} material={materials.demoButton_4} morphTargetDictionary={nodes.demoButton_4.morphTargetDictionary} morphTargetInfluences={nodes.demoButton_4.morphTargetInfluences} userData={{ targetNames: ['Key 1'], name: 'demoButton_4' }} />
             </group>
             <group name="DemoTexts" ref={demoTextsRef} userData={{ name: 'DemoTexts' }}>
-              {['Text_LiveMetrics', 'Text_Assembly', 'Text_Config', 'Text_Scale'].map((name, i) => (
-                <mesh
-                  key={name}
-                  geometry={nodes[name].geometry}
-                  material={textMaterials[i]}
-                  onPointerOver={() => {
-                    const newState = [...textHovered]
-                    newState[i] = true
-                    setTextHovered(newState)
-                  }}
-                  onPointerOut={() => {
-                    const newState = [...textHovered]
-                    newState[i] = false
-                    setTextHovered(newState)
-                  }}
-                />
-              ))}
+              <mesh name="demoText_live_metrics" geometry={nodes.demoText_live_metrics.geometry} material={materials.live_metrics}
+                onPointerOver={() => setHoveredIndex(0)}
+                onPointerOut={() => setHoveredIndex(null)}
+                onClick={() => console.log("Click")}
+              />
+              <mesh name="demoText_assembly" geometry={nodes.demoText_assembly.geometry} material={materials.assembly}
+                onPointerOver={() => setHoveredIndex(1)}
+                onPointerOut={() => setHoveredIndex(null)}
+                onClick={() => console.log("Click")}
+              />
+              <mesh name="demoText_configuration" geometry={nodes.demoText_configuration.geometry} material={materials.configuration}
+                onPointerOver={() => setHoveredIndex(2)}
+                onPointerOut={() => setHoveredIndex(null)}
+                onClick={() => console.log("Click")}
+              />
+              <mesh name="demoText_scale" geometry={nodes.demoText_scale.geometry} material={materials.scale}
+                onPointerOver={() => setHoveredIndex(3)}
+                onPointerOut={() => setHoveredIndex(null)}
+                onClick={() => console.log("Click")}
+              />
             </group>
             {/* <group name="LiveMetrics" userData={{ name: 'LiveMetrics' }}>
               <group name="LiveMetricFocus_EMPTY" position={[0.424, 1.431, -0.003]} scale={0.129} userData={{ name: 'LiveMetricFocus_EMPTY' }} />
@@ -189,7 +226,7 @@ export default function Model(props) {
           </group>
         </group>
       </group>
-    </group>
+    </group >
   )
 }
 

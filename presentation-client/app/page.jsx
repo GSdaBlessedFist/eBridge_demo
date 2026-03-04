@@ -13,8 +13,8 @@ const Page = () => {
     <div className="h-screen w-full">
       <Canvas className="h-full w-full">
         <Suspense fallback={<Html>Loading...</Html>}>
-          <Environment background={true} preset='city' />
-          <color args={["green"]} attach="background" />
+          {/* <Environment background={true} preset='city' /> */}
+          <color args={["black"]} attach="background" />
           <ambientLight intensity={0.5} />
           <directionalLight position={[0, 0, 5]} />
           <Model />
