@@ -22,6 +22,7 @@ const Page = () => {
           <Model />
         </Suspense>
         {/* Mount composer AFTER Suspense */}
+        {/* <OrbitControls /> */}
         <PostProcessing />
       </Canvas>
       {/* <Leva collapsed /> */}

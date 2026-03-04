@@ -1,13 +1,13 @@
 
 // 2026-03-03 21:15
-import { useRef } from 'react'
+import { useCallback, useRef } from 'react'
 import { useVoteStore } from '../stores/useVoteStore'
 import { useFrame } from '@react-three/fiber'
 import { usePresentationSocket } from '@/hooks/usePresentationSocket'
 import colorMap from './colorMap'
 
-export default function VoteButtons({ nodes, materials }) {
-    const { castVote } = usePresentationSocket("room-123")
+export default function VoteButtons({ nodes, materials, powerOn }) {
+    const { castVote, resetVotes } = usePresentationSocket("room-123")
 
     // refs for GLTF meshes
     const refs = {
@@ -60,7 +60,8 @@ export default function VoteButtons({ nodes, materials }) {
         })
     })
 
-    const handleClick = (color) => {
+    const handleClick = useCallback((color) => {
+        if (!powerOn) return
         castVote(color)
         console.log("Emitting vote:", color)
 
@@ -71,12 +72,11 @@ export default function VoteButtons({ nodes, materials }) {
         pressed.current[color] = true
         flash.current[color] = true
 
-        // release after flashDuration
         setTimeout(() => {
             pressed.current[color] = false
             flash.current[color] = false
         }, flashDuration)
-    }
+    }, [powerOn])
 
     return (
         <group name="Module_UIButtons">

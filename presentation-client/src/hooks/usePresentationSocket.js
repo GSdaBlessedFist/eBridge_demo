@@ -60,6 +60,11 @@ export const usePresentationSocket = (roomId) => {
         if (!socketRef.current) return
         socketRef.current.emit("castVote", { roomId, color })
     }
+
+    const resetVotes = (roomId) => {
+        if (!socketRef.current) return
+        socketRef.current.emit("resetVotes", { roomId })
+    }
     // Return castVote so components can use it
-    return { castVote }
+    return { castVote, resetVotes }
 }

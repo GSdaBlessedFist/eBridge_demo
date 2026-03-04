@@ -1,13 +1,16 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import * as THREE from "three"
+import { useSpring } from '@react-spring/three'
 import { useGLTF, PerspectiveCamera } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
-import { useTextMaterial } from '@/materials/textMaterials'
+import * as THREE from "three"
 import LiveMetrics from './LiveMetrics'
 import { startFakeVoteStream } from '@/utils/fakeVoteStream'
 import VoteButtons from './VoteButtons'
+import { usePresentationSocket } from '@/hooks/usePresentationSocket'
 
 export default function Model(props) {
+  const { resetVotes } = usePresentationSocket("room-123")
+
   const { nodes, materials } = useGLTF('/models/eBridgeDemo_theThing.glb')
   const { gl } = useThree()
 
@@ -20,12 +23,28 @@ export default function Model(props) {
   const [hoveredIndex, setHoveredIndex] = useState(null)
   const [selectedButton, setSelectedButton] = useState(null); // null or 0-3
 
-  const textMaterials = [
-    useTextMaterial(0xffffff, 0xffaa00),
-    useTextMaterial(0xffffff, 0xffaa00),
-    useTextMaterial(0xffffff, 0xffaa00),
-    useTextMaterial(0xffffff, 0xffaa00),
-  ]
+  const [powerOn, setPowerOn] = useState(false)
+  ////////////////////////////////////////////////////////////
+  //////////////////////////SPRINGS////////////////////////////
+
+  const { intensity } = useSpring({
+    intensity: powerOn ? 5 : 0.5,
+    config: powerOn
+      ? { tension: 170, friction: 12 }   // energetic overshoot
+      : { tension: 120, friction: 26 }   // damped, no bounce
+  })
+
+  ////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////
+  // Reset votes when powering off
+  useEffect(() => {
+    //if (!powerOn) resetVotes("room-123")
+  }, [powerOn, resetVotes])
+
+  useEffect(() => {
+    materials.mainBodyGrooveLights.emissiveIntensity = 1
+    materials.liveDataLight.emissiveIntensity = 1
+  }, [materials])
 
   useEffect(() => {
     const liveMetricsMat = materials.live_metrics
@@ -59,13 +78,6 @@ export default function Model(props) {
     }
   }, [materials, gl])
 
-  ////////////////////////////////////////////////////////////
-  ////////////////////////////////////////////////////////////
-
-
-  ////////////////////////////////////////////////////////////
-  /////////////////////////////////////////////////////////////
-
   useLayoutEffect(() => {
     if (!demoTextsRef.current) return
 
@@ -80,15 +92,13 @@ export default function Model(props) {
     console.log("Stored phases:", phaseRef.current)
   }, [])
 
-  //---------------------------------
-
   useFrame((state) => {
     const t = state.clock.getElapsedTime()
 
     const demoTexts = demoTextsRef.current?.children
     if (!demoTexts || demoTexts.length === 0) return
 
-    // Oscillation
+    // DemoText Oscillation
     demoTexts.forEach((text, i) => {
       if (baseYRef.current[i] === undefined) return
       text.position.y =
@@ -109,7 +119,7 @@ export default function Model(props) {
         THREE.MathUtils.lerp(text.material.emissiveIntensity, target, 0.1)
     })
 
-    // Button hover glow
+    // DemoTextButtons hover glow
     buttonRefs.forEach((ref, i) => {
       if (!ref.current) return
 
@@ -118,10 +128,16 @@ export default function Model(props) {
       ref.current.material.emissiveIntensity =
         THREE.MathUtils.lerp(ref.current.material.emissiveIntensity, target, 0.1)
     })
+
+    // slow breathing glow
+    materials.powerButton.emissiveIntensity =
+      1 + Math.sin(t * 2) * 0.35
+
+    // Apply spring to system lights
+    const i = intensity.get()
+    materials.mainBodyGrooveLights.emissiveIntensity = i
+    materials.liveDataLight.emissiveIntensity = i
   })
-
-
-
 
   //////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////
@@ -148,7 +164,8 @@ export default function Model(props) {
                 </group>
               </group>
               <mesh name="powerButtonBorder" castShadow receiveShadow geometry={nodes.powerButtonBorder.geometry} material={materials.buttonBorder} userData={{ name: 'powerButtonBorder' }}>
-                <mesh name="powerButton" castShadow receiveShadow geometry={nodes.powerButton.geometry} material={materials.powerButton} morphTargetDictionary={nodes.powerButton.morphTargetDictionary} morphTargetInfluences={nodes.powerButton.morphTargetInfluences} userData={{ targetNames: ['Key 1'], name: 'powerButton' }} />
+                <mesh name="powerButton" onClick={() => setPowerOn(p => !p)} geometry={nodes.powerButton.geometry} material={materials.powerButton} morphTargetDictionary={nodes.powerButton.morphTargetDictionary} morphTargetInfluences={nodes.powerButton.morphTargetInfluences} userData={{ targetNames: ['Key 1'], name: 'powerButton' }}
+                />
               </mesh>
               <group name="mainScreenPort_A" userData={{ name: 'mainScreenPort_A' }}>
                 <mesh name="mainScreenPort_A_1" castShadow receiveShadow geometry={nodes.mainScreenPort_A_1.geometry} material={materials.mainScreenPort_rim} />
@@ -175,7 +192,7 @@ export default function Model(props) {
                 {/* <mesh name="uiButton_1" castShadow receiveShadow geometry={nodes.uiButton_1.geometry} material={materials.uiButton_1} morphTargetDictionary={nodes.uiButton_1.morphTargetDictionary} morphTargetInfluences={nodes.uiButton_1.morphTargetInfluences} userData={{ targetNames: ['Key 1'], name: 'uiButton_1' }} />
                 <mesh name="uiButton_2" castShadow receiveShadow geometry={nodes.uiButton_2.geometry} material={materials.uiButton_2} morphTargetDictionary={nodes.uiButton_2.morphTargetDictionary} morphTargetInfluences={nodes.uiButton_2.morphTargetInfluences} userData={{ targetNames: ['Key 1'], name: 'uiButton_2' }} />
                 <mesh name="uiButton_3" castShadow receiveShadow geometry={nodes.uiButton_3.geometry} material={materials.uiButton_3} morphTargetDictionary={nodes.uiButton_3.morphTargetDictionary} morphTargetInfluences={nodes.uiButton_3.morphTargetInfluences} userData={{ targetNames: ['Key 1'], name: 'uiButton_3' }} /> */}
-                <VoteButtons nodes={nodes} materials={materials} />
+                <VoteButtons nodes={nodes} materials={materials} powerOn={powerOn} />
               </mesh>
             </group>
             <group name="Bottom_HiddenDrawer" userData={{ name: 'Bottom_HiddenDrawer' }}>
@@ -213,13 +230,7 @@ export default function Model(props) {
                 onClick={() => console.log("Click")}
               />
             </group>
-            {/* <group name="LiveMetrics" userData={{ name: 'LiveMetrics' }}>
-              <group name="LiveMetricFocus_EMPTY" position={[0.424, 1.431, -0.003]} scale={0.129} userData={{ name: 'LiveMetricFocus_EMPTY' }} />
-              <mesh name="liveMetricBar_3" castShadow receiveShadow geometry={nodes.liveMetricBar_3.geometry} material={materials.liveMetricBar_3} userData={{ name: 'liveMetricBar_3' }} />
-              <mesh name="liveMetricBar_1" castShadow receiveShadow geometry={nodes.liveMetricBar_1.geometry} material={materials.liveMetricBar_1} userData={{ name: 'liveMetricBar_1' }} />
-              <mesh name="liveMetricBar_2" castShadow receiveShadow geometry={nodes.liveMetricBar_2.geometry} material={materials.liveMetricBar_2} userData={{ name: 'liveMetricBar_2' }} />
-            </group> */}
-            <LiveMetrics nodes={nodes} materials={materials} />
+            <LiveMetrics nodes={nodes} materials={materials} powerOn={powerOn} />
             <group name="Scale" userData={{ name: 'Scale' }}>
               <mesh name="mainBodyGrooveRails" castShadow receiveShadow geometry={nodes.mainBodyGrooveRails.geometry} material={nodes.mainBodyGrooveRails.material} position={[0, 0.017, 0]} userData={{ name: 'mainBodyGrooveRails' }} />
             </group>
