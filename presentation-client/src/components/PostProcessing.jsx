@@ -13,10 +13,10 @@ export default function PostProcessing() {
         vignetteOffset,
         vignetteDarkness
     } = useControls("Post Processing", {
-        bloomIntensity: { value: 1.2, min: 0, max: 5, step: 0.1 },
+        bloomIntensity: { value: .5, min: 0, max: 5, step: 0.1 },
         luminanceThreshold: { value: 0.6, min: 0, max: 1, step: 0.01 },
         luminanceSmoothing: { value: 0.9, min: 0, max: 1, step: 0.01 },
-        bloomRadius: { value: 0.8, min: 0, max: 2, step: 0.01 },
+        bloomRadius: { value: 0.65, min: 0, max: 2, step: 0.01 },
         mipmapBlur: true,
 
         vignetteOffset: { value: 0.1, min: 0, max: 1, step: 0.01 },

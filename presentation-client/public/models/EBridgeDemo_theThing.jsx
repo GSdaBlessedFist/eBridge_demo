@@ -13,20 +13,31 @@ export default function Model(props) {
       <group name="Scene">
         <group name="Scene_Collection" userData={{ name: 'Scene Collection' }}>
           <group name="Cameras" userData={{ name: 'Cameras' }}>
-            <PerspectiveCamera name="demoMenu_Camera_1" makeDefault={false} far={100} near={0.1} fov={22.895} position={[-3.449, 4.263, 4.181]} rotation={[-0.724, -0.066, -0.162]} userData={{ name: 'demoMenu_Camera' }} />
-            <PerspectiveCamera name="liveMetrics_Camera_1" makeDefault={false} far={1000} near={0.1} fov={8.273} position={[8.579, -0.557, 5.125]} rotation={[0.37, 0.977, -0.311]} userData={{ name: 'liveMetrics_Camera' }} />
-            <PerspectiveCamera name="scale_Camera_1" makeDefault={false} far={1000} near={0.1} fov={22.895} position={[1.638, 0.359, -2.084]} rotation={[-3.072, 0.379, 3.116]} userData={{ name: 'scale_Camera' }} />
-            <PerspectiveCamera name="ROAM" makeDefault={false} far={1000} near={0.1} fov={22.895} position={[1.893, 2.525, 2.996]} rotation={[-0.886, 0.358, 0.405]} userData={{ name: 'ROAM' }} />
+            <group name="LiveMetricsCam_Target_EMPTY" position={[0.424, 1.477, -0.003]} userData={{ name: 'LiveMetricsCam_Target_EMPTY' }} />
+            <group name="OverviewCam_Target_EMPTY" position={[-0.014, 0.93, 0.875]} userData={{ name: 'OverviewCam_Target_EMPTY' }} />
+            <group name="OverviewCam_Position_EMPTY" position={[-1.048, 11.208, 3.353]} userData={{ name: 'OverviewCam_Position_EMPTY', fov: 50 }} />
+            <group name="DemoMenuCam_Target_EMPTY" position={[-3.109, 0.403, -0.19]} userData={{ name: 'DemoMenuCam_Target_EMPTY' }} />
+            <group name="DemoMenuCam_Position_EMPTY" position={[-3.47, 4.619, 4.916]} userData={{ name: 'DemoMenuCam_Position_EMPTY', fov: 50 }} />
+            <group name="PowerButtonCam_Target_EMPTY" position={[1.184, 0.735, 1.587]} userData={{ name: 'PowerButtonCam_Target_EMPTY' }} />
+            <group name="PowerButtonCam_Position_EMPTY" position={[2.617, 1.936, 2.996]} userData={{ name: 'PowerButtonCam_Position_EMPTY', fov: 50 }} />
+            <group name="LiveMetricsCam_Position_EMPTY" position={[12.039, -0.346, -5.89]} userData={{ name: 'LiveMetricsCam_Position_EMPTY', fov: 221 }} />
+            <group name="ScaleCam_Target_EMPTY" position={[1.572, 0.357, -1.599]} userData={{ name: 'ScaleCam_Target_EMPTY' }} />
+            <group name="ScaleCam_Position_EMPTY" position={[1.626, 0.359, -2.084]} userData={{ name: 'ScaleCam_Position_EMPTY', fov: 50 }} />
+            <PerspectiveCamera name="_DemoMenu_Camera_1" makeDefault={false} far={100} near={0.1} fov={22.895} position={[-3.47, 4.619, 4.916]} rotation={[-0.69, -0.055, -0.045]} userData={{ name: '_DemoMenu_Camera' }} />
+            <PerspectiveCamera name="_LiveMetrics_Camera_1" makeDefault={false} far={1000} near={0.1} fov={5.246} position={[12.039, -0.346, -5.89]} rotation={[2.841, 1.083, -2.875]} userData={{ name: '_LiveMetrics_Camera' }} />
+            <PerspectiveCamera name="_Scale_Camera_1" makeDefault={false} far={1000} near={0.1} fov={22.895} position={[1.626, 0.359, -2.084]} rotation={[-3.138, 0.11, 3.141]} userData={{ name: '_Scale_Camera' }} />
+            <PerspectiveCamera name="_PowerButton_Camera_1" makeDefault={false} far={1000} near={0.1} fov={22.895} position={[2.617, 1.936, 2.996]} rotation={[-0.706, 0.659, 0.481]} userData={{ name: '_PowerButton_Camera' }} />
+            <PerspectiveCamera name="_Overview_Camera_1" makeDefault={false} far={1000} near={0.1} fov={22.895} position={[1.45, 6.075, 8.08]} rotation={[-0.62, 0.164, 0.116]} userData={{ name: '_Overview_Camera' }} />
+            <PerspectiveCamera name="_ROAM_Camera" makeDefault={false} far={1000} near={0.1} fov={22.895} position={[1.846, 1.004, -3.697]} rotation={[-2.774, 0.461, 2.972]} userData={{ name: '_ROAM_Camera' }} />
           </group>
           <group name="THE_THING" userData={{ name: 'THE_THING' }}>
             <group name="Module_MainBody" userData={{ name: 'Module_MainBody' }}>
               <group name="mainBody" userData={{ name: 'mainBody' }}>
                 <mesh name="mainBody_1" castShadow receiveShadow geometry={nodes.mainBody_1.geometry} material={materials.mainBody} />
-                <mesh name="mainBody_2" castShadow receiveShadow geometry={nodes.mainBody_2.geometry} material={materials.topHiddenPanelBorder} />
-                <mesh name="mainBody_3" castShadow receiveShadow geometry={nodes.mainBody_3.geometry} material={materials.mainBodyGrooveLights} />
-                <mesh name="mainBody_4" castShadow receiveShadow geometry={nodes.mainBody_4.geometry} material={materials.liveDataLight} />
+                <mesh name="mainBody_2" castShadow receiveShadow geometry={nodes.mainBody_2.geometry} material={materials.mainBodyGrooveLights} />
+                <mesh name="mainBody_3" castShadow receiveShadow geometry={nodes.mainBody_3.geometry} material={materials.liveDataLight} />
                 <group name="dataPort" userData={{ name: 'dataPort' }}>
-                  <mesh name="dataPort_1" castShadow receiveShadow geometry={nodes.dataPort_1.geometry} material={materials.dataPort} />
+                  <mesh name="dataPort_1" castShadow receiveShadow geometry={nodes.dataPort_1.geometry} material={materials.mainBody} />
                   <mesh name="dataPort_2" castShadow receiveShadow geometry={nodes.dataPort_2.geometry} material={materials.dataCable} />
                 </group>
               </group>
@@ -39,11 +50,7 @@ export default function Model(props) {
               </group>
             </group>
             <group name="Top_HiddenPanel" userData={{ name: 'Top_HiddenPanel' }}>
-              <group name="topHiddenPanel_A" userData={{ name: 'topHiddenPanel_A' }}>
-                <mesh name="topHiddenPanel_A_1" castShadow receiveShadow geometry={nodes.topHiddenPanel_A_1.geometry} material={materials.mainBody} />
-                <mesh name="topHiddenPanel_A_2" castShadow receiveShadow geometry={nodes.topHiddenPanel_A_2.geometry} material={materials.topHiddenPanelBorder} />
-                <mesh name="topHiddenPanel_A_3" castShadow receiveShadow geometry={nodes.topHiddenPanel_A_3.geometry} material={materials.topHiddenPanelScreen} />
-              </group>
+              <mesh name="topHiddenPanel_A" castShadow receiveShadow geometry={nodes.topHiddenPanel_A.geometry} material={materials.mainBody} userData={{ name: 'topHiddenPanel_A' }} />
             </group>
             <group name="Module_DemoScreen" userData={{ name: 'Module_DemoScreen' }}>
               <group name="demoScreenBase_A" userData={{ name: 'demoScreenBase_A' }}>
@@ -54,7 +61,7 @@ export default function Model(props) {
               <mesh name="demoScreenTextPlane" castShadow receiveShadow geometry={nodes.demoScreenTextPlane.geometry} material={materials.demoScreenGlass} userData={{ name: 'demoScreenTextPlane' }} />
             </group>
             <group name="Module_UIButtons" userData={{ name: 'Module_UIButtons' }}>
-              <mesh name="uiButtonsBorder" castShadow receiveShadow geometry={nodes.uiButtonsBorder.geometry} material={materials.uiButtonsBorder} userData={{ name: 'uiButtonsBorder' }}>
+              <mesh name="uiButtonsBorder" castShadow receiveShadow geometry={nodes.uiButtonsBorder.geometry} material={materials.buttonBorder} userData={{ name: 'uiButtonsBorder' }}>
                 <mesh name="uiButton_1" castShadow receiveShadow geometry={nodes.uiButton_1.geometry} material={materials.uiButton_1} morphTargetDictionary={nodes.uiButton_1.morphTargetDictionary} morphTargetInfluences={nodes.uiButton_1.morphTargetInfluences} userData={{ targetNames: ['Key 1'], name: 'uiButton_1' }} />
                 <mesh name="uiButton_2" castShadow receiveShadow geometry={nodes.uiButton_2.geometry} material={materials.uiButton_2} morphTargetDictionary={nodes.uiButton_2.morphTargetDictionary} morphTargetInfluences={nodes.uiButton_2.morphTargetInfluences} userData={{ targetNames: ['Key 1'], name: 'uiButton_2' }} />
                 <mesh name="uiButton_3" castShadow receiveShadow geometry={nodes.uiButton_3.geometry} material={materials.uiButton_3} morphTargetDictionary={nodes.uiButton_3.morphTargetDictionary} morphTargetInfluences={nodes.uiButton_3.morphTargetInfluences} userData={{ targetNames: ['Key 1'], name: 'uiButton_3' }} />
@@ -62,7 +69,7 @@ export default function Model(props) {
             </group>
             <group name="Bottom_HiddenDrawer" userData={{ name: 'Bottom_HiddenDrawer' }}>
               <group name="bottomHiddenDrawer_A" userData={{ name: 'bottomHiddenDrawer_A' }}>
-                <mesh name="bottomHiddenDrawer_A_1" castShadow receiveShadow geometry={nodes.bottomHiddenDrawer_A_1.geometry} material={materials.bottomHiddenDrawer} />
+                <mesh name="bottomHiddenDrawer_A_1" castShadow receiveShadow geometry={nodes.bottomHiddenDrawer_A_1.geometry} material={materials.mainBody} />
                 <mesh name="bottomHiddenDrawer_A_2" castShadow receiveShadow geometry={nodes.bottomHiddenDrawer_A_2.geometry} material={materials.bottomHiddenDrawer_inside} />
               </group>
             </group>
@@ -74,24 +81,28 @@ export default function Model(props) {
               <mesh name="demoButton_4" castShadow receiveShadow geometry={nodes.demoButton_4.geometry} material={materials.demoButton_4} morphTargetDictionary={nodes.demoButton_4.morphTargetDictionary} morphTargetInfluences={nodes.demoButton_4.morphTargetInfluences} userData={{ targetNames: ['Key 1'], name: 'demoButton_4' }} />
             </group>
             <group name="DemoTexts" userData={{ name: 'DemoTexts' }}>
-              <group name="Empty_Assembly" position={[-3.082, 0.403, -0.475]} userData={{ name: 'Empty_Assembly' }} />
-              <group name="Empty_Config" position={[-2.644, 0.403, 0.02]} userData={{ name: 'Empty_Config' }} />
-              <group name="Empty_LiveMetrics" position={[-3.336, 0.403, -0.968]} userData={{ name: 'Empty_LiveMetrics' }} />
-              <group name="Empty_Scale" position={[-2.56, 0.403, 0.514]} userData={{ name: 'Empty_Scale' }} />
               <mesh name="demoText_live_metrics" castShadow receiveShadow geometry={nodes.demoText_live_metrics.geometry} material={materials.live_metrics} userData={{ name: 'demoText_live_metrics' }} />
               <mesh name="demoText_assembly" castShadow receiveShadow geometry={nodes.demoText_assembly.geometry} material={materials.assembly} userData={{ name: 'demoText_assembly' }} />
               <mesh name="demoText_configuration" castShadow receiveShadow geometry={nodes.demoText_configuration.geometry} material={materials.configuration} userData={{ name: 'demoText_configuration' }} />
               <mesh name="demoText_scale" castShadow receiveShadow geometry={nodes.demoText_scale.geometry} material={materials.scale} userData={{ name: 'demoText_scale' }} />
             </group>
             <group name="LiveMetrics" userData={{ name: 'LiveMetrics' }}>
-              <group name="LiveMetricFocus_EMPTY" position={[0.424, 1.431, -0.003]} scale={0.129} userData={{ name: 'LiveMetricFocus_EMPTY' }} />
-              <mesh name="liveMetricBar_3" castShadow receiveShadow geometry={nodes.liveMetricBar_3.geometry} material={materials.liveMetricBar_3} position={[-0.001, 1.097, -0.57]} userData={{ name: 'liveMetricBar_3' }} />
-              <mesh name="liveMetricBar_1" castShadow receiveShadow geometry={nodes.liveMetricBar_1.geometry} material={materials.liveMetricBar_1} position={[-0.001, 1.097, 0.303]} userData={{ name: 'liveMetricBar_1' }} />
-              <mesh name="liveMetricBar_2" castShadow receiveShadow geometry={nodes.liveMetricBar_2.geometry} material={materials.liveMetricBar_2} position={[-0.001, 1.097, -0.134]} userData={{ name: 'liveMetricBar_2' }} />
+              <mesh name="liveMetricBar_3" castShadow receiveShadow geometry={nodes.liveMetricBar_3.geometry} material={materials.Material} position={[-0.001, 1.097, -0.57]} userData={{ name: 'liveMetricBar_3' }} />
+              <mesh name="liveMetricBar_1" castShadow receiveShadow geometry={nodes.liveMetricBar_1.geometry} material={materials.Material} position={[-0.001, 1.097, 0.303]} userData={{ name: 'liveMetricBar_1' }} />
+              <mesh name="liveMetricBar_2" castShadow receiveShadow geometry={nodes.liveMetricBar_2.geometry} material={materials.Material} position={[-0.001, 1.097, -0.134]} userData={{ name: 'liveMetricBar_2' }} />
             </group>
             <group name="Scale" userData={{ name: 'Scale' }}>
-              <mesh name="mainBodyGrooveRails" castShadow receiveShadow geometry={nodes.mainBodyGrooveRails.geometry} material={nodes.mainBodyGrooveRails.material} position={[0, 0.017, 0]} userData={{ name: 'mainBodyGrooveRails' }} />
+              <mesh name="mainBodyGrooveRails" castShadow receiveShadow geometry={nodes.mainBodyGrooveRails.geometry} material={materials.scaleRails} position={[0, 0.017, 0]} userData={{ name: 'mainBodyGrooveRails' }} />
             </group>
+          </group>
+          <group name="Lights" userData={{ name: 'Lights' }}>
+            <group name="menu_pinLight_Target_EMPTY" position={[-1.375, 0.616, -0.04]} userData={{ name: 'menu_pinLight_Target_EMPTY' }} />
+            <group name="liveMetrics_pinLight_Target_EMPTY" position={[1.473, 1.292, -0.348]} userData={{ name: 'liveMetrics_pinLight_Target_EMPTY' }} />
+            <pointLight name="menu_pinLight" intensity={81398.1} decay={2} color="#90b6ff" position={[-0.658, 1.65, -2.358]} rotation={[-2.722, 0.275, 3.021]} userData={{ name: 'menu_pinLight' }} />
+            <pointLight name="liveMetrics_pinLight" intensity={26452.83} decay={2} color="#98b0ff" position={[3.974, 1.672, -0.618]} rotation={[-2.187, 1.387, 2.195]} userData={{ name: 'liveMetrics_pinLight' }} />
+          </group>
+          <group name="BG_Panels" userData={{ name: 'BG_Panels' }}>
+            <mesh name="menu_bg_panel" castShadow receiveShadow geometry={nodes.menu_bg_panel.geometry} material={materials.menu_bg_panel} userData={{ name: 'menu_bg_panel' }} />
           </group>
         </group>
       </group>

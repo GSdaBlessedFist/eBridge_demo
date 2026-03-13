@@ -1,17 +1,27 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useSpring } from '@react-spring/three'
-import { useGLTF, PerspectiveCamera } from '@react-three/drei'
+import { useGLTF, PerspectiveCamera, useAnimations } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from "three"
 import LiveMetrics from './LiveMetrics'
 import { startFakeVoteStream } from '@/utils/fakeVoteStream'
 import VoteButtons from './VoteButtons'
 import { usePresentationSocket } from '@/hooks/usePresentationSocket'
+import { useControls } from 'leva'
+import { useCameraAnimationController } from '@/hooks/useCameraAnimationController'
+import CameraRig from './cameras/CameraRig'
+import CameraManager from './cameras/CameraManager'
+import CameraFadePortal from './cameras/CameraFadePortal'
+import { useCameraStore } from '@/stores/useCameraStore'
+
 
 export default function Model(props) {
   const { resetVotes } = usePresentationSocket("room-123")
 
-  const { nodes, materials } = useGLTF('/models/eBridgeDemo_theThing.glb')
+  const group = useRef()
+  const { scene, nodes, materials, animations } = useGLTF('/models/eBridgeDemo_theThing.glb')
+  const { actions } = useAnimations(animations, group)
+  const { play } = useCameraAnimationController(actions)
   const { gl } = useThree()
 
   const demoTextsRef = useRef(); // name="DemoTexts"
@@ -24,6 +34,11 @@ export default function Model(props) {
   const [selectedButton, setSelectedButton] = useState(null); // null or 0-3
 
   const [powerOn, setPowerOn] = useState(false)
+
+  const setCamera = useCameraStore((state) => state.setCamera)
+
+
+
   ////////////////////////////////////////////////////////////
   //////////////////////////SPRINGS////////////////////////////
 
@@ -35,11 +50,25 @@ export default function Model(props) {
   })
 
   ////////////////////////////////////////////////////////////
+  ///////////////////////LEVA////////////////////////////////
+
+  const {
+    menu_pinLightIntensity, menu_pinLightColor, liveMetrics_pinLightIntensity, liveMetrics_pinLightColor
+  } = useControls("menuSpotLight", {
+    menu_pinLightIntensity: { value: 40, min: 0, max: 500, step: 0.1 },
+    menu_pinLightColor: { value: "#90b6ff" },
+    liveMetrics_pinLightIntensity: { value: 40, min: 0, max: 500, step: 0.1 },
+    liveMetrics_pinLightColor: { value: "#90b6ff" },
+  })
+
+  ////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////
-  // Reset votes when powering off
+  // Play initial Overview zoom on load
   useEffect(() => {
-    //if (!powerOn) resetVotes("room-123")
-  }, [powerOn, resetVotes])
+    if (actions?.['Overview_zoom']) {
+      play('Overview_zoom')
+    }
+  }, [actions])
 
   useEffect(() => {
     materials.mainBodyGrooveLights.emissiveIntensity = 1
@@ -95,6 +124,8 @@ export default function Model(props) {
   useFrame((state) => {
     const t = state.clock.getElapsedTime()
 
+
+
     const demoTexts = demoTextsRef.current?.children
     if (!demoTexts || demoTexts.length === 0) return
 
@@ -142,29 +173,30 @@ export default function Model(props) {
   //////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////
   return (
-    <group {...props} dispose={null}>
+    <group ref={group} {...props} dispose={null}>
       <group name="Scene">
         <group name="Scene_Collection" userData={{ name: 'Scene Collection' }}>
-          <group name="Cameras" userData={{ name: 'Cameras' }}>
-            <PerspectiveCamera name="demoMenu_Camera_1" makeDefault={false} far={100} near={0.1} fov={22.895} position={[-3.449, 4.263, 4.181]} rotation={[-0.724, -0.066, -0.162]} userData={{ name: 'demoMenu_Camera' }} />
-            <PerspectiveCamera name="liveMetrics_Camera_1" makeDefault={true} far={1000} near={0.1} fov={8.273} position={[8.579, -0.557, 5.125]} rotation={[0.37, 0.977, -0.311]} userData={{ name: 'liveMetrics_Camera' }} />
-            <PerspectiveCamera name="scale_Camera_1" makeDefault={false} far={1000} near={0.1} fov={22.895} position={[1.638, 0.359, -2.084]} rotation={[-3.072, 0.379, 3.116]} userData={{ name: 'scale_Camera' }} />
-            <PerspectiveCamera name="ROAM" makeDefault={false} far={1000} near={0.1} fov={22.895} position={[4.489, 3.651, 5.979]} rotation={[-0.452, 0.539, 0.244]} userData={{ name: 'ROAM' }} />
-          </group>
+
+          <CameraRig />
+
+
           <group name="THE_THING" userData={{ name: 'THE_THING' }}>
             <group name="Module_MainBody" userData={{ name: 'Module_MainBody' }}>
               <group name="mainBody" userData={{ name: 'mainBody' }}>
                 <mesh name="mainBody_1" castShadow receiveShadow geometry={nodes.mainBody_1.geometry} material={materials.mainBody} />
-                <mesh name="mainBody_2" castShadow receiveShadow geometry={nodes.mainBody_2.geometry} material={materials.topHiddenPanelBorder} />
-                <mesh name="mainBody_3" castShadow receiveShadow geometry={nodes.mainBody_3.geometry} material={materials.mainBodyGrooveLights} />
-                <mesh name="mainBody_4" castShadow receiveShadow geometry={nodes.mainBody_4.geometry} material={materials.liveDataLight} />
+                <mesh name="mainBody_2" castShadow receiveShadow geometry={nodes.mainBody_2.geometry} material={materials.mainBodyGrooveLights} />
+                <mesh name="mainBody_3" castShadow receiveShadow geometry={nodes.mainBody_3.geometry} material={materials.liveDataLight} />
                 <group name="dataPort" userData={{ name: 'dataPort' }}>
-                  <mesh name="dataPort_1" castShadow receiveShadow geometry={nodes.dataPort_1.geometry} material={materials.dataPort} />
+                  <mesh name="dataPort_1" castShadow receiveShadow geometry={nodes.dataPort_1.geometry} material={materials.mainBody} />
                   <mesh name="dataPort_2" castShadow receiveShadow geometry={nodes.dataPort_2.geometry} material={materials.dataCable} />
                 </group>
               </group>
               <mesh name="powerButtonBorder" castShadow receiveShadow geometry={nodes.powerButtonBorder.geometry} material={materials.buttonBorder} userData={{ name: 'powerButtonBorder' }}>
-                <mesh name="powerButton" onClick={() => setPowerOn(p => !p)} geometry={nodes.powerButton.geometry} material={materials.powerButton} morphTargetDictionary={nodes.powerButton.morphTargetDictionary} morphTargetInfluences={nodes.powerButton.morphTargetInfluences} userData={{ targetNames: ['Key 1'], name: 'powerButton' }}
+                <mesh name="powerButton" geometry={nodes.powerButton.geometry} material={materials.powerButton} morphTargetDictionary={nodes.powerButton.morphTargetDictionary} morphTargetInfluences={nodes.powerButton.morphTargetInfluences} userData={{ targetNames: ['Key 1'], name: 'powerButton' }}
+                  onClick={() => {
+                    setPowerOn(p => !p);
+                    play('DemoMenu_zoom')
+                  }}
                 />
               </mesh>
               <group name="mainScreenPort_A" userData={{ name: 'mainScreenPort_A' }}>
@@ -173,11 +205,7 @@ export default function Model(props) {
               </group>
             </group>
             <group name="Top_HiddenPanel" userData={{ name: 'Top_HiddenPanel' }}>
-              <group name="topHiddenPanel_A" userData={{ name: 'topHiddenPanel_A' }}>
-                <mesh name="topHiddenPanel_A_1" castShadow receiveShadow geometry={nodes.topHiddenPanel_A_1.geometry} material={materials.mainBody} />
-                <mesh name="topHiddenPanel_A_2" castShadow receiveShadow geometry={nodes.topHiddenPanel_A_2.geometry} material={materials.topHiddenPanelBorder} />
-                <mesh name="topHiddenPanel_A_3" castShadow receiveShadow geometry={nodes.topHiddenPanel_A_3.geometry} material={materials.topHiddenPanelScreen} />
-              </group>
+              <mesh name="topHiddenPanel_A" castShadow receiveShadow geometry={nodes.topHiddenPanel_A.geometry} material={materials.mainBody} userData={{ name: 'topHiddenPanel_A' }} />
             </group>
             <group name="Module_DemoScreen" userData={{ name: 'Module_DemoScreen' }}>
               <group name="demoScreenBase_A" userData={{ name: 'demoScreenBase_A' }}>
@@ -197,7 +225,7 @@ export default function Model(props) {
             </group>
             <group name="Bottom_HiddenDrawer" userData={{ name: 'Bottom_HiddenDrawer' }}>
               <group name="bottomHiddenDrawer_A" userData={{ name: 'bottomHiddenDrawer_A' }}>
-                <mesh name="bottomHiddenDrawer_A_1" castShadow receiveShadow geometry={nodes.bottomHiddenDrawer_A_1.geometry} material={materials.bottomHiddenDrawer} />
+                <mesh name="bottomHiddenDrawer_A_1" castShadow receiveShadow geometry={nodes.bottomHiddenDrawer_A_1.geometry} material={materials.mainBody} />
                 <mesh name="bottomHiddenDrawer_A_2" castShadow receiveShadow geometry={nodes.bottomHiddenDrawer_A_2.geometry} material={materials.bottomHiddenDrawer_inside} />
               </group>
             </group>
@@ -212,27 +240,44 @@ export default function Model(props) {
               <mesh name="demoText_live_metrics" geometry={nodes.demoText_live_metrics.geometry} material={materials.live_metrics}
                 onPointerOver={() => setHoveredIndex(0)}
                 onPointerOut={() => setHoveredIndex(null)}
-                onClick={() => console.log("Click")}
+                onClick={() => {
+                  setCamera("metrics")
+                }}
               />
               <mesh name="demoText_assembly" geometry={nodes.demoText_assembly.geometry} material={materials.assembly}
                 onPointerOver={() => setHoveredIndex(1)}
                 onPointerOut={() => setHoveredIndex(null)}
-                onClick={() => console.log("Click")}
+                onClick={() => {
+                  setCamera("metrics")
+                }}
               />
               <mesh name="demoText_configuration" geometry={nodes.demoText_configuration.geometry} material={materials.configuration}
                 onPointerOver={() => setHoveredIndex(2)}
                 onPointerOut={() => setHoveredIndex(null)}
-                onClick={() => console.log("Click")}
+                onClick={() => {
+                  setCamera("metrics")
+                }}
               />
               <mesh name="demoText_scale" geometry={nodes.demoText_scale.geometry} material={materials.scale}
                 onPointerOver={() => setHoveredIndex(3)}
                 onPointerOut={() => setHoveredIndex(null)}
-                onClick={() => console.log("Click")}
+                onClick={() => {
+                  setCamera("scale")
+                }}
               />
             </group>
             <LiveMetrics nodes={nodes} materials={materials} powerOn={powerOn} />
             <group name="Scale" userData={{ name: 'Scale' }}>
-              <mesh name="mainBodyGrooveRails" castShadow receiveShadow geometry={nodes.mainBodyGrooveRails.geometry} material={nodes.mainBodyGrooveRails.material} position={[0, 0.017, 0]} userData={{ name: 'mainBodyGrooveRails' }} />
+              <mesh name="mainBodyGrooveRails" castShadow receiveShadow geometry={nodes.mainBodyGrooveRails.geometry} material={materials.scaleRails} position={[0, 0.017, 0]} userData={{ name: 'mainBodyGrooveRails' }} />
+            </group>
+            <group name="Lights" userData={{ name: 'Lights' }}>
+              <group name="menu_pinLight_Target_EMPTY" position={[-1.375, 0.616, -0.04]} userData={{ name: 'menu_pinLight_Target_EMPTY' }} />
+              <group name="liveMetrics_pinLight_Target_EMPTY" position={[1.473, 1.292, -0.348]} userData={{ name: 'liveMetrics_pinLight_Target_EMPTY' }} />
+              <pointLight name="menu_pinLight" intensity={menu_pinLightIntensity} decay={2} color={menu_pinLightColor} position={[-0.658, 1.65, -2.358]} rotation={[-2.722, 0.275, 3.021]} userData={{ name: 'menu_pinLight' }} />
+              <pointLight name="liveMetrics_pinLight" intensity={liveMetrics_pinLightIntensity} decay={2} color={liveMetrics_pinLightColor} position={[3.974, 1.672, -0.618]} rotation={[-2.187, 1.387, 2.195]} userData={{ name: 'liveMetrics_pinLight' }} />
+            </group>
+            <group name="BG_Panels" userData={{ name: 'BG_Panels' }}>
+              <mesh name="menu_bg_panel" castShadow receiveShadow geometry={nodes.menu_bg_panel.geometry} material={materials.menu_bg_panel} userData={{ name: 'menu_bg_panel' }} />
             </group>
           </group>
         </group>
