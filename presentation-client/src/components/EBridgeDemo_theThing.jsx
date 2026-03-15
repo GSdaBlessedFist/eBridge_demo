@@ -1,6 +1,6 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useSpring } from '@react-spring/three'
-import { useGLTF, PerspectiveCamera, useAnimations } from '@react-three/drei'
+import { useGLTF, PerspectiveCamera, useAnimations, Html } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from "three"
 import LiveMetrics from './LiveMetrics'
@@ -13,11 +13,10 @@ import CameraRig from './cameras/CameraRig'
 import CameraManager from './cameras/CameraManager'
 import CameraFadePortal from './cameras/CameraFadePortal'
 import { useCameraStore } from '@/stores/useCameraStore'
+import PowerUI from './PowerUI'
 
-
-export default function Model(props) {
+export default function Model({ powerOn, setPowerOn }) {
   const { resetVotes } = usePresentationSocket("room-123")
-
   const group = useRef()
   const { scene, nodes, materials, animations } = useGLTF('/models/eBridgeDemo_theThing.glb')
   const { actions } = useAnimations(animations, group)
@@ -26,32 +25,39 @@ export default function Model(props) {
 
   const demoTextsRef = useRef(); // name="DemoTexts"
   const buttonRefs = [useRef(), useRef(), useRef(), useRef()]
-
   const baseYRef = useRef([])
   const phaseRef = useRef([])
-
   const [hoveredIndex, setHoveredIndex] = useState(null)
   const [selectedButton, setSelectedButton] = useState(null); // null or 0-3
-
-  const [powerOn, setPowerOn] = useState(false)
-
   const setCamera = useCameraStore((state) => state.setCamera)
 
+  const [menuStripeActivated, setMenuStripeActivated] = useState(false);
 
+  const menuBGStripeRef = useRef();
 
+  function menuStripeActivate(t) {
+    if (!menuStripeActivated) return
+    if (!powerOn) setMenuStripeActivated(false)
+    if (menuStripeActivated) {
+      menuBGStripeRef.current.position.x += Math.sin(t * 1.5) * .005;
+    }
+  }
+
+  function handleShutdown() {
+    console.log("System shutting down")
+    setPowerOn(false)
+    setCamera("_Overview_Camera_1")
+  }
   ////////////////////////////////////////////////////////////
   //////////////////////////SPRINGS////////////////////////////
-
   const { intensity } = useSpring({
     intensity: powerOn ? 5 : 0.5,
     config: powerOn
       ? { tension: 170, friction: 12 }   // energetic overshoot
       : { tension: 120, friction: 26 }   // damped, no bounce
   })
-
   ////////////////////////////////////////////////////////////
   ///////////////////////LEVA////////////////////////////////
-
   const {
     menu_pinLightIntensity, menu_pinLightColor, liveMetrics_pinLightIntensity, liveMetrics_pinLightColor
   } = useControls("menuSpotLight", {
@@ -60,15 +66,26 @@ export default function Model(props) {
     liveMetrics_pinLightIntensity: { value: 40, min: 0, max: 500, step: 0.1 },
     liveMetrics_pinLightColor: { value: "#90b6ff" },
   })
-
   ////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////
+
   // Play initial Overview zoom on load
+  // useEffect(() => {
+  //   if (actions?.['Overview_zoom']) {
+  //     play('Overview_zoom')
+  //   }
+  // }, [actions])
+
+  //Text materials transparent
   useEffect(() => {
-    if (actions?.['Overview_zoom']) {
-      play('Overview_zoom')
-    }
-  }, [actions])
+    const demoTexts = demoTextsRef.current?.children
+    if (!demoTexts) return
+
+    demoTexts.forEach((text) => {
+      text.material.transparent = true
+      text.material.opacity = powerOn ? 1 : 0
+    })
+  }, [])
 
   useEffect(() => {
     materials.mainBodyGrooveLights.emissiveIntensity = 1
@@ -86,7 +103,6 @@ export default function Model(props) {
       configurationMat,
       scaleMat
     ]
-
     demoTextMaterials.forEach(mat => {
       if (mat.map) {
         mat.map.anisotropy = gl.capabilities.getMaxAnisotropy()
@@ -95,10 +111,8 @@ export default function Model(props) {
         mat.map.needsUpdate = true
       }
     })
-
     //Powerbutton
     const powerButtonMat = materials.powerButton
-
     if (powerButtonMat.map) {
       powerButtonMat.map.anisotropy = gl.capabilities.getMaxAnisotropy()
       powerButtonMat.map.minFilter = THREE.LinearMipMapLinearFilter
@@ -109,25 +123,33 @@ export default function Model(props) {
 
   useLayoutEffect(() => {
     if (!demoTextsRef.current) return
-
     const PHASE = -0.6
-
     const children = demoTextsRef.current.children
-
     baseYRef.current = children.map(c => c.position.y)
     phaseRef.current = children.map((_, i) => i * PHASE)
-
     console.log("Stored baseY:", baseYRef.current)
     console.log("Stored phases:", phaseRef.current)
   }, [])
 
   useFrame((state) => {
     const t = state.clock.getElapsedTime()
-
-
-
     const demoTexts = demoTextsRef.current?.children
+    const targetOpacity = powerOn ? 1 : 0
+
     if (!demoTexts || demoTexts.length === 0) return
+
+    // DemoText fade
+    demoTexts.forEach((text) => {
+      if (!text.material) return
+
+      text.material.transparent = true
+
+      text.material.opacity = THREE.MathUtils.lerp(
+        text.material.opacity ?? 0,
+        targetOpacity,
+        0.2
+      )
+    })
 
     // DemoText Oscillation
     demoTexts.forEach((text, i) => {
@@ -136,50 +158,41 @@ export default function Model(props) {
         baseYRef.current[i] +
         Math.sin(t * 2 + phaseRef.current[i]) * 0.025
     })
-
     // DemoText hover glow
     demoTexts.forEach((text, i) => {
       if (!text.material) return
-
       // Ensure emissive exists (for MeshStandardMaterial)
       if (!text.material.emissive) text.material.emissive = new THREE.Color(0xffffff)
       if (text.material.emissiveIntensity === undefined) text.material.emissiveIntensity = 1
-
       const target = hoveredIndex === i ? 17 : 1
       text.material.emissiveIntensity =
         THREE.MathUtils.lerp(text.material.emissiveIntensity, target, 0.1)
     })
-
     // DemoTextButtons hover glow
     buttonRefs.forEach((ref, i) => {
       if (!ref.current) return
-
       const target = hoveredIndex === i ? 17 : 1
-
       ref.current.material.emissiveIntensity =
         THREE.MathUtils.lerp(ref.current.material.emissiveIntensity, target, 0.1)
     })
-
     // slow breathing glow
     materials.powerButton.emissiveIntensity =
       1 + Math.sin(t * 2) * 0.35
-
     // Apply spring to system lights
     const i = intensity.get()
     materials.mainBodyGrooveLights.emissiveIntensity = i
     materials.liveDataLight.emissiveIntensity = i
-  })
 
+    // Menu stripe
+    menuStripeActivate(t)
+  })
   //////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////
-  return (
-    <group ref={group} {...props} dispose={null}>
+  return (<>
+    <group ref={group} dispose={null}>
       <group name="Scene">
         <group name="Scene_Collection" userData={{ name: 'Scene Collection' }}>
-
           <CameraRig />
-
-
           <group name="THE_THING" userData={{ name: 'THE_THING' }}>
             <group name="Module_MainBody" userData={{ name: 'Module_MainBody' }}>
               <group name="mainBody" userData={{ name: 'mainBody' }}>
@@ -194,8 +207,11 @@ export default function Model(props) {
               <mesh name="powerButtonBorder" castShadow receiveShadow geometry={nodes.powerButtonBorder.geometry} material={materials.buttonBorder} userData={{ name: 'powerButtonBorder' }}>
                 <mesh name="powerButton" geometry={nodes.powerButton.geometry} material={materials.powerButton} morphTargetDictionary={nodes.powerButton.morphTargetDictionary} morphTargetInfluences={nodes.powerButton.morphTargetInfluences} userData={{ targetNames: ['Key 1'], name: 'powerButton' }}
                   onClick={() => {
-                    setPowerOn(p => !p);
-                    play('DemoMenu_zoom')
+                    setPowerOn(true);
+                    setMenuStripeActivated(prev => !prev)
+                    setTimeout(() => {
+                      setCamera("demoMenu")
+                    }, 1500)
                   }}
                 />
               </mesh>
@@ -277,13 +293,19 @@ export default function Model(props) {
               <pointLight name="liveMetrics_pinLight" intensity={liveMetrics_pinLightIntensity} decay={2} color={liveMetrics_pinLightColor} position={[3.974, 1.672, -0.618]} rotation={[-2.187, 1.387, 2.195]} userData={{ name: 'liveMetrics_pinLight' }} />
             </group>
             <group name="BG_Panels" userData={{ name: 'BG_Panels' }}>
-              <mesh name="menu_bg_panel" castShadow receiveShadow geometry={nodes.menu_bg_panel.geometry} material={materials.menu_bg_panel} userData={{ name: 'menu_bg_panel' }} />
+              <group name="menuStripe" position={[1.5, 0, 0]}>
+                <mesh ref={menuBGStripeRef} name="menu_bg_panel" castShadow receiveShadow geometry={nodes.menu_bg_panel.geometry} material={materials.menu_bg_panel} userData={{ name: 'menu_bg_panel' }} />
+              </group>
             </group>
           </group>
         </group>
       </group>
     </group >
-  )
-}
 
+  </>)
+}
 useGLTF.preload('/models/eBridgeDemo_theThing.glb')
+
+/*
+
+*/

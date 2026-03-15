@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 
-export default function CameraFadePortal({ duration = 600, onReady }) {
+export default function CameraFadePortal({ duration = 750, onReady }) {
     const [visible, setVisible] = useState(false)
 
     const triggerFade = (midpointAction) => {
