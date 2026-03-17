@@ -48,13 +48,14 @@ export default function Model(props) {
                 <mesh name="mainScreenPort_A_1" castShadow receiveShadow geometry={nodes.mainScreenPort_A_1.geometry} material={materials.mainScreenPort_rim} />
                 <mesh name="mainScreenPort_A_2" castShadow receiveShadow geometry={nodes.mainScreenPort_A_2.geometry} material={materials.mainScreenPort_inside} />
               </group>
+              <mesh name="returnToMenu_liveMetrics" castShadow receiveShadow geometry={nodes.returnToMenu_liveMetrics.geometry} material={materials.returnToMenuLights} userData={{ name: 'returnToMenu_liveMetrics' }} />
             </group>
             <group name="Top_HiddenPanel" userData={{ name: 'Top_HiddenPanel' }}>
               <mesh name="topHiddenPanel_A" castShadow receiveShadow geometry={nodes.topHiddenPanel_A.geometry} material={materials.mainBody} userData={{ name: 'topHiddenPanel_A' }} />
             </group>
             <group name="Module_DemoScreen" userData={{ name: 'Module_DemoScreen' }}>
               <group name="demoScreenBase_A" userData={{ name: 'demoScreenBase_A' }}>
-                <mesh name="demoScreenBase_A_1" castShadow receiveShadow geometry={nodes.demoScreenBase_A_1.geometry} material={materials.demoScreenBase} />
+                <mesh name="demoScreenBase_A_1" castShadow receiveShadow geometry={nodes.demoScreenBase_A_1.geometry} material={materials.mainBody} />
                 <mesh name="demoScreenBase_A_2" castShadow receiveShadow geometry={nodes.demoScreenBase_A_2.geometry} material={materials.demoScreenBG} />
                 <mesh name="demoScreenGlass" castShadow receiveShadow geometry={nodes.demoScreenGlass.geometry} material={materials.demoScreenGlass} userData={{ name: 'demoScreenGlass' }} />
               </group>
@@ -102,7 +103,8 @@ export default function Model(props) {
             <pointLight name="liveMetrics_pinLight" intensity={26452.83} decay={2} color="#98b0ff" position={[3.974, 1.672, -0.618]} rotation={[-2.187, 1.387, 2.195]} userData={{ name: 'liveMetrics_pinLight' }} />
           </group>
           <group name="BG_Panels" userData={{ name: 'BG_Panels' }}>
-            <mesh name="menu_bg_panel" castShadow receiveShadow geometry={nodes.menu_bg_panel.geometry} material={materials.menu_bg_panel} userData={{ name: 'menu_bg_panel' }} />
+            <mesh name="menu_bg_strip" castShadow receiveShadow geometry={nodes.menu_bg_strip.geometry} material={materials.menu_bg_strip} userData={{ name: 'menu_bg_strip' }} />
+            <mesh name="liveMetrics_bg_panel" castShadow receiveShadow geometry={nodes.liveMetrics_bg_panel.geometry} material={materials.liveMetrics_bg_panel} userData={{ name: 'liveMetrics_bg_panel' }} />
           </group>
         </group>
       </group>

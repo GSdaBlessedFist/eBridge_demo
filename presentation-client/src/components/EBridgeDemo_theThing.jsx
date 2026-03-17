@@ -30,10 +30,12 @@ export default function Model({ powerOn, setPowerOn }) {
   const [hoveredIndex, setHoveredIndex] = useState(null)
   const [selectedButton, setSelectedButton] = useState(null); // null or 0-3
   const setCamera = useCameraStore((state) => state.setCamera)
+  const currentCamera = useCameraStore((state) => state.currentCamera)
 
   const [menuStripeActivated, setMenuStripeActivated] = useState(false);
 
   const menuBGStripeRef = useRef();
+  const liveMetricsBGRef = useRef();
 
   function menuStripeActivate(t) {
     if (!menuStripeActivated) return
@@ -68,13 +70,11 @@ export default function Model({ powerOn, setPowerOn }) {
   })
   ////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////
-
-  // Play initial Overview zoom on load
-  // useEffect(() => {
-  //   if (actions?.['Overview_zoom']) {
-  //     play('Overview_zoom')
-  //   }
-  // }, [actions])
+  useEffect(() => {
+    if (currentCamera !== "metrics") {
+      liveMetricsBGRef.current.visible = false
+    }
+  }, [currentCamera]);
 
   //Text materials transparent
   useEffect(() => {
@@ -219,13 +219,14 @@ export default function Model({ powerOn, setPowerOn }) {
                 <mesh name="mainScreenPort_A_1" castShadow receiveShadow geometry={nodes.mainScreenPort_A_1.geometry} material={materials.mainScreenPort_rim} />
                 <mesh name="mainScreenPort_A_2" castShadow receiveShadow geometry={nodes.mainScreenPort_A_2.geometry} material={materials.mainScreenPort_inside} />
               </group>
+              <mesh name="returnToMenu_liveMetrics" castShadow receiveShadow geometry={nodes.returnToMenu_liveMetrics.geometry} material={materials.returnToMenuLights} userData={{ name: 'returnToMenu_liveMetrics' }} onClick={() => setCamera("demoMenu")} />
             </group>
             <group name="Top_HiddenPanel" userData={{ name: 'Top_HiddenPanel' }}>
               <mesh name="topHiddenPanel_A" castShadow receiveShadow geometry={nodes.topHiddenPanel_A.geometry} material={materials.mainBody} userData={{ name: 'topHiddenPanel_A' }} />
             </group>
             <group name="Module_DemoScreen" userData={{ name: 'Module_DemoScreen' }}>
               <group name="demoScreenBase_A" userData={{ name: 'demoScreenBase_A' }}>
-                <mesh name="demoScreenBase_A_1" castShadow receiveShadow geometry={nodes.demoScreenBase_A_1.geometry} material={materials.demoScreenBase} />
+                <mesh name="demoScreenBase_A_1" castShadow receiveShadow geometry={nodes.demoScreenBase_A_1.geometry} material={materials.mainBody} />
                 <mesh name="demoScreenBase_A_2" castShadow receiveShadow geometry={nodes.demoScreenBase_A_2.geometry} material={materials.demoScreenBG} />
                 <mesh name="demoScreenGlass" castShadow receiveShadow geometry={nodes.demoScreenGlass.geometry} material={materials.demoScreenGlass} userData={{ name: 'demoScreenGlass' }} />
               </group>
@@ -258,6 +259,9 @@ export default function Model({ powerOn, setPowerOn }) {
                 onPointerOut={() => setHoveredIndex(null)}
                 onClick={() => {
                   setCamera("metrics")
+                  setTimeout(() => {
+                    liveMetricsBGRef.current.visible = true;
+                  }, 500)
                 }}
               />
               <mesh name="demoText_assembly" geometry={nodes.demoText_assembly.geometry} material={materials.assembly}
@@ -294,7 +298,11 @@ export default function Model({ powerOn, setPowerOn }) {
             </group>
             <group name="BG_Panels" userData={{ name: 'BG_Panels' }}>
               <group name="menuStripe" position={[1.5, 0, 0]}>
-                <mesh ref={menuBGStripeRef} name="menu_bg_panel" castShadow receiveShadow geometry={nodes.menu_bg_panel.geometry} material={materials.menu_bg_panel} userData={{ name: 'menu_bg_panel' }} />
+                {/* <mesh ref={menuBGStripeRef} name="menu_bg_panel" castShadow receiveShadow geometry={nodes.menu_bg_panel.geometry} material={materials.menu_bg_panel} userData={{ name: 'menu_bg_panel' }} /> */}
+                <mesh ref={menuBGStripeRef} name="menu_bg_strip" castShadow receiveShadow geometry={nodes.menu_bg_strip.geometry} material={materials.menu_bg_strip} userData={{ name: 'menu_bg_strip' }} />
+              </group>
+              <group ref={liveMetricsBGRef} name="liveMetricsBG">
+                <mesh name="liveMetrics_bg_panel" castShadow receiveShadow geometry={nodes.liveMetrics_bg_panel.geometry} material={materials.liveMetrics_bg_panel} userData={{ name: 'liveMetrics_bg_panel' }} />
               </group>
             </group>
           </group>
