@@ -5,9 +5,11 @@ import { useVoteStore } from '../stores/useVoteStore'
 import { useFrame } from '@react-three/fiber'
 import { usePresentationSocket } from '@/hooks/usePresentationSocket'
 import colorMap from './colorMap'
+import { useCameraStore } from '@/stores/useCameraStore'
 
 export default function VoteButtons({ nodes, materials, powerOn }) {
     const { castVote, resetVotes } = usePresentationSocket("room-123")
+    const currentCamera = useCameraStore((state) => state.currentCamera)
 
     // refs for GLTF meshes
     const refs = {
@@ -80,9 +82,13 @@ export default function VoteButtons({ nodes, materials, powerOn }) {
 
     return (
         <group name="Module_UIButtons">
+            <primitive object={nodes.uiButtonsBorder_1} />
+            <primitive object={nodes.uiButtonsBorder_2} />
             <primitive ref={refs.red} object={nodes.uiButton_1} onClick={(e) => { e.stopPropagation(); handleClick('red') }} />
             <primitive ref={refs.green} object={nodes.uiButton_2} onClick={(e) => { e.stopPropagation(); handleClick('green') }} />
             <primitive ref={refs.blue} object={nodes.uiButton_3} onClick={(e) => { e.stopPropagation(); handleClick('blue') }} />
+            <mesh name="uiButtonsIOLights" castShadow receiveShadow geometry={nodes.uiButtonsIOLights.geometry} material={materials.mainScreenIOLights} position={[1.093, 0.965, 0.309]} rotation={[0, 0, -Math.PI]} scale={[-0.074, -1, -0.02]} userData={{ name: 'uiButtonsIOLights' }} />
         </group>
     )
 }
+

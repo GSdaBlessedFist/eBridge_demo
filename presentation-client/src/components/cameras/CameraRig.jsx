@@ -21,7 +21,7 @@ export default function CameraRig() {
             <PerspectiveCamera name="_Scale_Camera_1" makeDefault={false} far={1000} near={0.1} fov={22.895} position={[1.626, 0.359, -2.084]} rotation={[-3.138, 0.11, 3.141]} userData={{ name: '_Scale_Camera' }} />
             <PerspectiveCamera ref={powerCam} name="_PowerButton_Camera_1" makeDefault={false} far={1000} near={0.1} fov={22.895} position={[2.617, 1.936, 2.996]} rotation={[-0.706, 0.659, 0.481]} userData={{ name: '_PowerButton_Camera' }} />
             <PerspectiveCamera name="_Overview_Camera_1" makeDefault={true} far={1000} near={0.1} fov={22.895} position={[1.45, 6.075, 8.08]} rotation={[-0.62, 0.164, 0.116]} userData={{ name: '_Overview_Camera' }} />
-            <PerspectiveCamera name="_ROAM_Camera" makeDefault={false} far={1000} near={0.1} fov={22.895} position={[1.846, 1.004, -3.697]} rotation={[-2.774, 0.461, 2.972]} userData={{ name: '_ROAM_Camera' }} />
+            <PerspectiveCamera name="_Assembly_Camera_1" makeDefault={false} far={1000} near={0.1} fov={39.761} position={[0, 9.925, 0]} rotation={[-Math.PI / 2, 0, 0]} userData={{ name: '_Assembly_Camera' }} />
         </group>
     )
 }

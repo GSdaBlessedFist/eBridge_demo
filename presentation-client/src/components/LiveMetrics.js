@@ -5,8 +5,10 @@ import { useRef, useEffect } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useVoteStore } from '../stores/useVoteStore'
 import colorMap from './colorMap'
+import { useCameraStore } from '@/stores/useCameraStore'
 
 export default function LiveMetrics({ nodes, materials, powerOn }) {
+    const currentCamera = useCameraStore((state) => state.currentCamera)
     const barRefs = {
         red: useRef(),
         green: useRef(),
@@ -31,6 +33,14 @@ export default function LiveMetrics({ nodes, materials, powerOn }) {
             })
         }
     }, [powerOn])
+
+    useEffect(() => {
+        if (currentCamera == "metrics") {
+            Object.values(barRefs).forEach(b => b.current.material.opacity = 1)
+        } else {
+            Object.values(barRefs).forEach(b => b.current.material.opacity = 0)
+        }
+    }, [currentCamera])
 
     useFrame(() => {
         if (!powerOn) return  // Block flares / updates if system is off
@@ -58,14 +68,14 @@ export default function LiveMetrics({ nodes, materials, powerOn }) {
 
     return (
         <group name="LiveMetrics">
-            <mesh ref={barRefs.red} geometry={nodes.liveMetricBar_1.geometry} position={[-0.001, 1.097, 0.303]} castShadow receiveShadow>
-                <meshStandardMaterial attach="material" color={colorMap.red} metalness={0.6} roughness={0.4} emissive={colorMap.red} emissiveIntensity={0} />
+            <mesh ref={barRefs.red} geometry={nodes.liveMetricBar_1.geometry} position={[-0.001, 1.098, 0.303]} castShadow receiveShadow>
+                <meshStandardMaterial attach="material" transparent opacity={0} color={colorMap.red} metalness={0.6} roughness={0.4} emissive={colorMap.red} emissiveIntensity={0} />
             </mesh>
-            <mesh ref={barRefs.green} geometry={nodes.liveMetricBar_2.geometry} position={[-0.001, 1.097, -0.134]} castShadow receiveShadow>
-                <meshStandardMaterial attach="material" color={colorMap.green} metalness={0.6} roughness={0.4} emissive={colorMap.green} emissiveIntensity={0} />
+            <mesh ref={barRefs.green} geometry={nodes.liveMetricBar_2.geometry} position={[-0.001, 1.098, -0.134]} castShadow receiveShadow>
+                <meshStandardMaterial attach="material" transparent opacity={0} color={colorMap.green} metalness={0.6} roughness={0.4} emissive={colorMap.green} emissiveIntensity={0} />
             </mesh>
-            <mesh ref={barRefs.blue} geometry={nodes.liveMetricBar_3.geometry} position={[-0.001, 1.097, -0.57]} castShadow receiveShadow>
-                <meshStandardMaterial attach="material" color={colorMap.blue} metalness={0.6} roughness={0.4} emissive={colorMap.blue} emissiveIntensity={0} />
+            <mesh ref={barRefs.blue} geometry={nodes.liveMetricBar_3.geometry} position={[-0.001, 1.098, -0.57]} castShadow receiveShadow>
+                <meshStandardMaterial attach="material" transparent opacity={0} color={colorMap.blue} metalness={0.6} roughness={0.4} emissive={colorMap.blue} emissiveIntensity={0} />
             </mesh>
         </group>
     )

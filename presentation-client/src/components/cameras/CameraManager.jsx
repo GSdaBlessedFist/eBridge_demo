@@ -1,11 +1,12 @@
 // 2026-03-13 15:05
 import { useCameraStore } from '@/stores/useCameraStore'
 import { useThree } from '@react-three/fiber'
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 export default function CameraManager({ triggerFade }) {
     const { scene, set } = useThree()
     const currentCameraKey = useCameraStore((state) => state.currentCamera)
+    const [hasMounted, setHasMounted] = useState(false)
 
     // Registry maps friendly keys → Three.js camera names
     const cameraRegistry = useMemo(() => ({
@@ -14,17 +15,27 @@ export default function CameraManager({ triggerFade }) {
         demoMenu: "_DemoMenu_Camera_1",
         power: "_PowerButton_Camera_1",
         scale: "_Scale_Camera_1",
-        roam: "_ROAM_Camera",
+        assembly: "_Assembly_Camera_1"
     }), [])
 
     useEffect(() => {
-        if (!currentCameraKey) return
+        if (!currentCameraKey) {
+            console.error("🚨 currentCameraKey is invalid:", currentCameraKey)
+            return
+        }
 
         const camName = cameraRegistry[currentCameraKey]
         const cam = scene.getObjectByName(camName)
 
         if (!cam) {
             console.warn(`Camera "${camName}" not found`)
+            return
+        }
+
+        // Skip fade on first mount
+        if (!hasMounted) {
+            set({ camera: cam })
+            setHasMounted(true)
             return
         }
 

@@ -4,13 +4,15 @@ Command: npx gltfjsx@6.5.3 eBridgeDemo_theThing.glb -k -K -E --meta --shadows
 */
 
 import React from 'react'
-import { useGLTF, PerspectiveCamera } from '@react-three/drei'
+import { useGLTF, PerspectiveCamera, useAnimations } from '@react-three/drei'
 
 export default function Model(props) {
-  const { nodes, materials } = useGLTF('/eBridgeDemo_theThing.glb')
+  const group = React.useRef()
+  const { nodes, materials, animations } = useGLTF('/eBridgeDemo_theThing.glb')
+  const { actions } = useAnimations(animations, group)
   return (
-    <group {...props} dispose={null}>
-      <group name="Scene">
+    <group ref={group} {...props} dispose={null}>
+      <group name="Scene" userData={{ booltron: {}, gltf_action_filter: [{ keep: 1, action: { name: 'Assembly_Action', type: 'Action' } }] }}>
         <group name="Scene_Collection" userData={{ name: 'Scene Collection' }}>
           <group name="Cameras" userData={{ name: 'Cameras' }}>
             <group name="LiveMetricsCam_Target_EMPTY" position={[0.424, 1.477, -0.003]} userData={{ name: 'LiveMetricsCam_Target_EMPTY' }} />
@@ -28,7 +30,8 @@ export default function Model(props) {
             <PerspectiveCamera name="_Scale_Camera_1" makeDefault={false} far={1000} near={0.1} fov={22.895} position={[1.626, 0.359, -2.084]} rotation={[-3.138, 0.11, 3.141]} userData={{ name: '_Scale_Camera' }} />
             <PerspectiveCamera name="_PowerButton_Camera_1" makeDefault={false} far={1000} near={0.1} fov={22.895} position={[2.617, 1.936, 2.996]} rotation={[-0.706, 0.659, 0.481]} userData={{ name: '_PowerButton_Camera' }} />
             <PerspectiveCamera name="_Overview_Camera_1" makeDefault={false} far={1000} near={0.1} fov={22.895} position={[1.45, 6.075, 8.08]} rotation={[-0.62, 0.164, 0.116]} userData={{ name: '_Overview_Camera' }} />
-            <PerspectiveCamera name="_ROAM_Camera" makeDefault={false} far={1000} near={0.1} fov={22.895} position={[1.846, 1.004, -3.697]} rotation={[-2.774, 0.461, 2.972]} userData={{ name: '_ROAM_Camera' }} />
+            <PerspectiveCamera name="_Assembly_Camera_1" makeDefault={false} far={1000} near={0.1} fov={39.761} position={[0, 9.925, 0]} rotation={[-Math.PI / 2, 0, 0]} userData={{ name: '_Assembly_Camera' }} />
+            <PerspectiveCamera name="Camera_1" makeDefault={false} far={1000} near={0.1} fov={22.895} position={[2.816, 2.391, 3.621]} rotation={[-0.658, 0.579, 0.401]} userData={{ name: 'Camera' }} />
           </group>
           <group name="THE_THING" userData={{ name: 'THE_THING' }}>
             <group name="Module_MainBody" userData={{ name: 'Module_MainBody' }}>
@@ -41,12 +44,16 @@ export default function Model(props) {
                   <mesh name="dataPort_2" castShadow receiveShadow geometry={nodes.dataPort_2.geometry} material={materials.dataCable} />
                 </group>
               </group>
-              <mesh name="powerButtonBorder" castShadow receiveShadow geometry={nodes.powerButtonBorder.geometry} material={materials.buttonBorder} userData={{ name: 'powerButtonBorder' }}>
+              <group name="powerButtonBorder" userData={{ name: 'powerButtonBorder' }}>
+                <mesh name="powerButtonBorder_1" castShadow receiveShadow geometry={nodes.powerButtonBorder_1.geometry} material={materials.buttonBorder} />
+                <mesh name="powerButtonBorder_2" castShadow receiveShadow geometry={nodes.powerButtonBorder_2.geometry} material={materials.socketBlack} />
                 <mesh name="powerButton" castShadow receiveShadow geometry={nodes.powerButton.geometry} material={materials.powerButton} morphTargetDictionary={nodes.powerButton.morphTargetDictionary} morphTargetInfluences={nodes.powerButton.morphTargetInfluences} userData={{ targetNames: ['Key 1'], name: 'powerButton' }} />
-              </mesh>
+                <mesh name="powerButtonIOLights" castShadow receiveShadow geometry={nodes.powerButtonIOLights.geometry} material={materials.mainScreenIOLights} userData={{ name: 'powerButtonIOLights' }} />
+              </group>
               <group name="mainScreenPort_A" userData={{ name: 'mainScreenPort_A' }}>
-                <mesh name="mainScreenPort_A_1" castShadow receiveShadow geometry={nodes.mainScreenPort_A_1.geometry} material={materials.mainScreenPort_rim} />
-                <mesh name="mainScreenPort_A_2" castShadow receiveShadow geometry={nodes.mainScreenPort_A_2.geometry} material={materials.mainScreenPort_inside} />
+                <mesh name="mainScreenPort_A_1" castShadow receiveShadow geometry={nodes.mainScreenPort_A_1.geometry} material={materials.buttonBorder} />
+                <mesh name="mainScreenPort_A_2" castShadow receiveShadow geometry={nodes.mainScreenPort_A_2.geometry} material={materials.socketBlack} />
+                <mesh name="mainScreenIOLights" castShadow receiveShadow geometry={nodes.mainScreenIOLights.geometry} material={materials.mainScreenIOLights} position={[-0.215, 0.957, -0.133]} rotation={[-Math.PI, 0, 0]} scale={[-0.033, -1, -0.127]} userData={{ name: 'mainScreenIOLights' }} />
               </group>
               <mesh name="returnToMenu_liveMetrics" castShadow receiveShadow geometry={nodes.returnToMenu_liveMetrics.geometry} material={materials.returnToMenuLights} userData={{ name: 'returnToMenu_liveMetrics' }} />
             </group>
@@ -57,16 +64,20 @@ export default function Model(props) {
               <group name="demoScreenBase_A" userData={{ name: 'demoScreenBase_A' }}>
                 <mesh name="demoScreenBase_A_1" castShadow receiveShadow geometry={nodes.demoScreenBase_A_1.geometry} material={materials.mainBody} />
                 <mesh name="demoScreenBase_A_2" castShadow receiveShadow geometry={nodes.demoScreenBase_A_2.geometry} material={materials.demoScreenBG} />
-                <mesh name="demoScreenGlass" castShadow receiveShadow geometry={nodes.demoScreenGlass.geometry} material={materials.demoScreenGlass} userData={{ name: 'demoScreenGlass' }} />
+                <mesh name="demoScreenGlass" castShadow receiveShadow geometry={nodes.demoScreenGlass.geometry} material={materials.demoScreenGlass} userData={{ name: 'demoScreenGlass' }}>
+                  <mesh name="demoScreenTextPlane" castShadow receiveShadow geometry={nodes.demoScreenTextPlane.geometry} material={materials.demoScreenGlass} userData={{ name: 'demoScreenTextPlane' }} />
+                </mesh>
               </group>
-              <mesh name="demoScreenTextPlane" castShadow receiveShadow geometry={nodes.demoScreenTextPlane.geometry} material={materials.demoScreenGlass} userData={{ name: 'demoScreenTextPlane' }} />
             </group>
             <group name="Module_UIButtons" userData={{ name: 'Module_UIButtons' }}>
-              <mesh name="uiButtonsBorder" castShadow receiveShadow geometry={nodes.uiButtonsBorder.geometry} material={materials.buttonBorder} userData={{ name: 'uiButtonsBorder' }}>
+              <group name="uiButtonsBorder" userData={{ name: 'uiButtonsBorder' }}>
+                <mesh name="uiButtonsBorder_1" castShadow receiveShadow geometry={nodes.uiButtonsBorder_1.geometry} material={materials.buttonBorder} />
+                <mesh name="uiButtonsBorder_2" castShadow receiveShadow geometry={nodes.uiButtonsBorder_2.geometry} material={materials.socketBlack} />
                 <mesh name="uiButton_1" castShadow receiveShadow geometry={nodes.uiButton_1.geometry} material={materials.uiButton_1} morphTargetDictionary={nodes.uiButton_1.morphTargetDictionary} morphTargetInfluences={nodes.uiButton_1.morphTargetInfluences} userData={{ targetNames: ['Key 1'], name: 'uiButton_1' }} />
                 <mesh name="uiButton_2" castShadow receiveShadow geometry={nodes.uiButton_2.geometry} material={materials.uiButton_2} morphTargetDictionary={nodes.uiButton_2.morphTargetDictionary} morphTargetInfluences={nodes.uiButton_2.morphTargetInfluences} userData={{ targetNames: ['Key 1'], name: 'uiButton_2' }} />
                 <mesh name="uiButton_3" castShadow receiveShadow geometry={nodes.uiButton_3.geometry} material={materials.uiButton_3} morphTargetDictionary={nodes.uiButton_3.morphTargetDictionary} morphTargetInfluences={nodes.uiButton_3.morphTargetInfluences} userData={{ targetNames: ['Key 1'], name: 'uiButton_3' }} />
-              </mesh>
+              </group>
+              <mesh name="uiButtonsIOLights" castShadow receiveShadow geometry={nodes.uiButtonsIOLights.geometry} material={materials.mainScreenIOLights} position={[1.093, 0.965, 0.309]} rotation={[0, 0, -Math.PI]} scale={[-0.074, -1, -0.02]} userData={{ name: 'uiButtonsIOLights' }} />
             </group>
             <group name="Bottom_HiddenDrawer" userData={{ name: 'Bottom_HiddenDrawer' }}>
               <group name="bottomHiddenDrawer_A" userData={{ name: 'bottomHiddenDrawer_A' }}>
@@ -75,11 +86,11 @@ export default function Model(props) {
               </group>
             </group>
             <group name="Module_DemoButtons" userData={{ name: 'Module_DemoButtons' }}>
-              <mesh name="demoButtonsBorder" castShadow receiveShadow geometry={nodes.demoButtonsBorder.geometry} material={materials.demoButtonsBorder} userData={{ name: 'demoButtonsBorder' }} />
-              <mesh name="demoButton_1" castShadow receiveShadow geometry={nodes.demoButton_1.geometry} material={materials.demoButton_1} morphTargetDictionary={nodes.demoButton_1.morphTargetDictionary} morphTargetInfluences={nodes.demoButton_1.morphTargetInfluences} userData={{ targetNames: ['Key 1'], name: 'demoButton_1' }} />
-              <mesh name="demoButton_2" castShadow receiveShadow geometry={nodes.demoButton_2.geometry} material={materials.demoButton_2} morphTargetDictionary={nodes.demoButton_2.morphTargetDictionary} morphTargetInfluences={nodes.demoButton_2.morphTargetInfluences} userData={{ targetNames: ['Key 1'], name: 'demoButton_2' }} />
-              <mesh name="demoButton_3" castShadow receiveShadow geometry={nodes.demoButton_3.geometry} material={materials.demoButton_3} morphTargetDictionary={nodes.demoButton_3.morphTargetDictionary} morphTargetInfluences={nodes.demoButton_3.morphTargetInfluences} userData={{ targetNames: ['Key 1'], name: 'demoButton_3' }} />
-              <mesh name="demoButton_4" castShadow receiveShadow geometry={nodes.demoButton_4.geometry} material={materials.demoButton_4} morphTargetDictionary={nodes.demoButton_4.morphTargetDictionary} morphTargetInfluences={nodes.demoButton_4.morphTargetInfluences} userData={{ targetNames: ['Key 1'], name: 'demoButton_4' }} />
+              <mesh name="demoButton_1" castShadow receiveShadow geometry={nodes.demoButton_1.geometry} material={materials.demoButton_1} morphTargetDictionary={nodes.demoButton_1.morphTargetDictionary} morphTargetInfluences={nodes.demoButton_1.morphTargetInfluences} position={[-1.533, 0.406, -0.973]} userData={{ targetNames: ['Key 1'], name: 'demoButton_1' }} />
+              <mesh name="demoButton_2" castShadow receiveShadow geometry={nodes.demoButton_2.geometry} material={materials.demoButton_2} morphTargetDictionary={nodes.demoButton_2.morphTargetDictionary} morphTargetInfluences={nodes.demoButton_2.morphTargetInfluences} position={[-1.533, 0.406, -0.476]} userData={{ targetNames: ['Key 1'], name: 'demoButton_2' }} />
+              <mesh name="demoButton_3" castShadow receiveShadow geometry={nodes.demoButton_3.geometry} material={materials.demoButton_3} morphTargetDictionary={nodes.demoButton_3.morphTargetDictionary} morphTargetInfluences={nodes.demoButton_3.morphTargetInfluences} position={[-1.533, 0.406, 0.02]} userData={{ targetNames: ['Key 1'], name: 'demoButton_3' }} />
+              <mesh name="demoButton_4" castShadow receiveShadow geometry={nodes.demoButton_4.geometry} material={materials.demoButton_4} morphTargetDictionary={nodes.demoButton_4.morphTargetDictionary} morphTargetInfluences={nodes.demoButton_4.morphTargetInfluences} position={[-1.533, 0.406, 0.517]} userData={{ targetNames: ['Key 1'], name: 'demoButton_4' }} />
+              <mesh name="demoButtonsBorder" castShadow receiveShadow geometry={nodes.demoButtonsBorder.geometry} material={materials.socketBlack} userData={{ name: 'demoButtonsBorder' }} />
             </group>
             <group name="DemoTexts" userData={{ name: 'DemoTexts' }}>
               <mesh name="demoText_live_metrics" castShadow receiveShadow geometry={nodes.demoText_live_metrics.geometry} material={materials.live_metrics} userData={{ name: 'demoText_live_metrics' }} />
@@ -88,9 +99,9 @@ export default function Model(props) {
               <mesh name="demoText_scale" castShadow receiveShadow geometry={nodes.demoText_scale.geometry} material={materials.scale} userData={{ name: 'demoText_scale' }} />
             </group>
             <group name="LiveMetrics" userData={{ name: 'LiveMetrics' }}>
-              <mesh name="liveMetricBar_3" castShadow receiveShadow geometry={nodes.liveMetricBar_3.geometry} material={materials.Material} position={[-0.001, 1.097, -0.57]} userData={{ name: 'liveMetricBar_3' }} />
-              <mesh name="liveMetricBar_1" castShadow receiveShadow geometry={nodes.liveMetricBar_1.geometry} material={materials.Material} position={[-0.001, 1.097, 0.303]} userData={{ name: 'liveMetricBar_1' }} />
-              <mesh name="liveMetricBar_2" castShadow receiveShadow geometry={nodes.liveMetricBar_2.geometry} material={materials.Material} position={[-0.001, 1.097, -0.134]} userData={{ name: 'liveMetricBar_2' }} />
+              <mesh name="liveMetricBar_3" castShadow receiveShadow geometry={nodes.liveMetricBar_3.geometry} material={materials.Material} position={[-0.001, 1.098, -0.57]} userData={{ name: 'liveMetricBar_3' }} />
+              <mesh name="liveMetricBar_1" castShadow receiveShadow geometry={nodes.liveMetricBar_1.geometry} material={materials.Material} position={[-0.001, 1.098, 0.303]} userData={{ name: 'liveMetricBar_1' }} />
+              <mesh name="liveMetricBar_2" castShadow receiveShadow geometry={nodes.liveMetricBar_2.geometry} material={materials.Material} position={[-0.001, 1.098, -0.134]} userData={{ name: 'liveMetricBar_2' }} />
             </group>
             <group name="Scale" userData={{ name: 'Scale' }}>
               <mesh name="mainBodyGrooveRails" castShadow receiveShadow geometry={nodes.mainBodyGrooveRails.geometry} material={materials.scaleRails} position={[0, 0.017, 0]} userData={{ name: 'mainBodyGrooveRails' }} />
@@ -99,10 +110,12 @@ export default function Model(props) {
           <group name="Lights" userData={{ name: 'Lights' }}>
             <group name="menu_pinLight_Target_EMPTY" position={[-1.375, 0.616, -0.04]} userData={{ name: 'menu_pinLight_Target_EMPTY' }} />
             <group name="liveMetrics_pinLight_Target_EMPTY" position={[1.473, 1.292, -0.348]} userData={{ name: 'liveMetrics_pinLight_Target_EMPTY' }} />
-            <pointLight name="menu_pinLight" intensity={81398.1} decay={2} color="#90b6ff" position={[-0.658, 1.65, -2.358]} rotation={[-2.722, 0.275, 3.021]} userData={{ name: 'menu_pinLight' }} />
-            <pointLight name="liveMetrics_pinLight" intensity={26452.83} decay={2} color="#98b0ff" position={[3.974, 1.672, -0.618]} rotation={[-2.187, 1.387, 2.195]} userData={{ name: 'liveMetrics_pinLight' }} />
+            <pointLight name="menu_pinLight" intensity={81398.1} decay={2} position={[-0.658, 1.65, -2.358]} rotation={[-2.722, 0.275, 3.021]} userData={{ name: 'menu_pinLight' }} />
+            <pointLight name="liveMetrics_pinLight" intensity={26452.83} decay={2} position={[3.974, 1.672, -0.618]} rotation={[-2.187, 1.387, 2.195]} userData={{ name: 'liveMetrics_pinLight' }} />
+            <pointLight name="assembly_pinLight_fill" intensity={2608.868} decay={2} position={[3.869, 3.788, -2.446]} rotation={[-Math.PI / 2, 0, 0]} userData={{ name: 'assembly_pinLight_fill' }} />
           </group>
-          <group name="BG_Panels" userData={{ name: 'BG_Panels' }}>
+          <group name="BG_Extras" userData={{ name: 'BG_Extras' }}>
+            <group name="underMainBodyCloud_point" position={[0.4, -1.619, -0.681]} userData={{ name: 'underMainBodyCloud_point' }} />
             <mesh name="menu_bg_strip" castShadow receiveShadow geometry={nodes.menu_bg_strip.geometry} material={materials.menu_bg_strip} userData={{ name: 'menu_bg_strip' }} />
             <mesh name="liveMetrics_bg_panel" castShadow receiveShadow geometry={nodes.liveMetrics_bg_panel.geometry} material={materials.liveMetrics_bg_panel} userData={{ name: 'liveMetrics_bg_panel' }} />
           </group>

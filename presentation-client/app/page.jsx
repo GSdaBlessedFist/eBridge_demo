@@ -1,6 +1,7 @@
 "use client"
 import CameraFadePortal from "@/components/cameras/CameraFadePortal";
 import CameraManager from "@/components/cameras/CameraManager";
+import CloudGroup from "@/components/CloudGroup";
 import Model from "@/components/EBridgeDemo_theThing";
 import PostProcessing from "@/components/PostProcessing";
 import PowerUI from "@/components/PowerUI";
@@ -18,6 +19,7 @@ const Page = () => {
   const [powerOn, setPowerOn] = useState(false)
   const setCamera = useCameraStore((state) => state.setCamera)
 
+
   return (
     <div className="h-screen w-full relative">
       <Canvas className="h-full w-full" gl={{ antialias: true }}>
@@ -31,6 +33,7 @@ const Page = () => {
         </Suspense>
         {/* Mount composer AFTER Suspense */}
         {/* <OrbitControls /> */}
+        <CloudGroup />
         <PostProcessing />
       </Canvas>
       {powerOn && (

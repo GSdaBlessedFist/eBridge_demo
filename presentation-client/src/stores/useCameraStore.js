@@ -2,6 +2,6 @@
 import { create } from 'zustand'
 
 export const useCameraStore = create((set) => ({
-    currentCamera: null,
+    currentCamera: "overview",
     setCamera: (cam) => set({ currentCamera: cam }),
 }))
