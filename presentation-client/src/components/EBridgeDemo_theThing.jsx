@@ -40,6 +40,27 @@ export default function Model({ powerOn, setPowerOn }) {
   const liveMetricsBGRef = useRef();
   const underMainBodyCloudPointRef = useRef();
 
+  // 2026-03-23 14:05
+  // Assembly text 
+  // const assemblySteps = [
+  //   { start: 0, end: 0.25, text: "Demo buttons" },
+  //   { start: 0.25, end: 0.5, text: "Frame begins to separate" },
+  //   { start: 0.5, end: 0.75, text: "Panels detached" },
+  //   { start: 0.75, end: 1, text: "Top components lifted" },
+  // ]
+
+  // 2026-03-23 14:07
+  // Assembly text fades
+  function getStepOpacity(progress, start, end) {
+    if (progress < start) return 0
+
+    // fade in over first 20% of the step
+    const fadeRange = (end - start) * 0.2
+    const fadeProgress = (progress - start) / fadeRange
+
+    return Math.min(fadeProgress, 1)
+  }
+
   function menuStripeActivate(t) {
     if (!menuStripeActivated) return
     if (!powerOn) setMenuStripeActivated(false)
@@ -53,6 +74,7 @@ export default function Model({ powerOn, setPowerOn }) {
     setPowerOn(false)
     setCamera("_Overview_Camera_1")
   }
+
   ////////////////////////////////////////////////////////////
   //////////////////////////SPRINGS////////////////////////////
   const { intensity } = useSpring({
@@ -71,8 +93,12 @@ export default function Model({ powerOn, setPowerOn }) {
     liveMetrics_pinLightIntensity: { value: 40, min: 0, max: 500, step: 0.1 },
     liveMetrics_pinLightColor: { value: "#90b6ff" },
   })
-
-
+  //-2, 0.2, 0
+  const { textX, textY, textZ } = useControls("text", {
+    textX: { value: -2.8, min: -4, max: 4, step: 0.1 },
+    textY: { value: 0, min: -4, max: 4, step: 0.1 },
+    textZ: { value: 1, min: -4, max: 4, step: 0.1 }
+  })
   ////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////
 
@@ -86,12 +112,13 @@ export default function Model({ powerOn, setPowerOn }) {
 
     if (currentCamera !== 'assembly' && action.time > 0) {
       // Reverse smoothly to start when leaving assembly
-      action.paused = false;
+      action.paused = true;
       action.timeScale = -1;
       action.setLoop(THREE.LoopOnce, 1);
       action.clampWhenFinished = true;
 
       if (action.time === 0) action.time = action.getClip().duration;
+      action.paused = false;
       action.play();
     }
 
@@ -106,6 +133,8 @@ export default function Model({ powerOn, setPowerOn }) {
       action.play();
       action.paused = true;
     }
+
+
   }, [actions, currentCamera]);
 
   useEffect(() => {
@@ -276,7 +305,30 @@ export default function Model({ powerOn, setPowerOn }) {
                       if (demoTextsRef.current) demoTextsRef.current.visible = false
                     }
                   }}
-                />
+                >
+                  {currentCamera === "assembly" && (
+                    <Html position={[-.2, 3.9, 1.1]}>
+                      {(() => {
+                        const opacity = getStepOpacity(assemblyActionProgress, 0.55, 0.65)
+
+                        return (
+                          <div
+                            style={{
+                              width: "150px",
+                              opacity,
+                              textAlign: 'center',
+                              transform: `translateY(${10 - opacity * 1}px) scale(${1.15 - opacity * 0.15})`,
+                              transition: "opacity 0.2s ease, transform 0.2s ease",
+                              color: "white"
+                            }}
+                          >
+                            System power button
+                          </div>
+                        )
+                      })()}
+                    </Html>
+                  )}
+                </mesh>
                 <mesh name="powerButtonBorder_1" castShadow receiveShadow geometry={nodes.powerButtonBorder_1.geometry} material={materials.buttonBorder} />
                 <mesh name="powerButtonBorder_2" castShadow receiveShadow geometry={nodes.powerButtonBorder_2.geometry} material={materials.socketBlack} />
                 <mesh name="powerButtonIOLights" castShadow receiveShadow geometry={nodes.powerButtonIOLights.geometry} material={materials.mainScreenIOLights} userData={{ name: 'powerButtonIOLights' }} />
@@ -299,11 +351,53 @@ export default function Model({ powerOn, setPowerOn }) {
                   <mesh name="demoScreenTextPlane" castShadow receiveShadow geometry={nodes.demoScreenTextPlane.geometry} material={materials.demoScreenGlass} userData={{ name: 'demoScreenTextPlane' }} />
                 </mesh>
               </group>
+              {currentCamera === "assembly" && (
+                <Html position={[2.7, 0.4, -0.5]}>
+                  {(() => {
+                    const opacity = getStepOpacity(assemblyActionProgress, 0.95, 1.0)
+
+                    return (
+                      <div
+                        style={{
+                          width: "200px",
+                          opacity,
+                          transform: `translateY(${10 - opacity * 1}px) scale(${1.15 - opacity * 0.15})`,
+                          transition: "opacity 0.2s ease, transform 0.2s ease",
+                          color: "white"
+                        }}
+                      >
+                        Digital display screen
+                      </div>
+                    )
+                  })()}
+                </Html>
+              )}
             </group>
             <group name="Module_UIButtons" userData={{ name: 'Module_UIButtons' }}>
               <mesh name="uiButtonsBorder" castShadow receiveShadow geometry={nodes.uiButtonsBorder.geometry} material={materials.buttonBorder} userData={{ name: 'uiButtonsBorder' }}>
                 <VoteButtons nodes={nodes} materials={materials} powerOn={powerOn} />
               </mesh>
+              {currentCamera === "assembly" && (
+                <Html position={[3.3, -0.2, 1.1]}>
+                  {(() => {
+                    const opacity = getStepOpacity(assemblyActionProgress, 0.85, 0.9)
+
+                    return (
+                      <div
+                        style={{
+                          width: "200px",
+                          opacity,
+                          transform: `translateY(${10 - opacity * 10}px) scale(${1.15 - opacity * 0.15})`,
+                          transition: "opacity 0.2s ease, transform 0.2s ease",
+                          color: "white"
+                        }}
+                      >
+                        Voting buttons
+                      </div>
+                    )
+                  })()}
+                </Html>
+              )}
             </group>
             <group name="Bottom_HiddenDrawer" userData={{ name: 'Bottom_HiddenDrawer' }}>
               <group name="bottomHiddenDrawer_A" userData={{ name: 'bottomHiddenDrawer_A' }}>
@@ -312,6 +406,27 @@ export default function Model({ powerOn, setPowerOn }) {
               </group>
             </group>
             <group name="Module_DemoButtons" userData={{ name: 'Module_DemoButtons' }}>
+              {currentCamera === "assembly" && (
+                <Html position={[-3.25, 0, 1]}>
+                  {(() => {
+                    const opacity = getStepOpacity(assemblyActionProgress, 0.25, 0.36)
+
+                    return (
+                      <div
+                        style={{
+                          width: "200px",
+                          opacity,
+                          transform: `translateY(${10 - opacity * 10}px) scale(${1.15 - opacity * 0.15})`,
+                          transition: "opacity 0.2s ease, transform 0.2s ease",
+                          color: "white"
+                        }}
+                      >
+                        Demo buttons
+                      </div>
+                    )
+                  })()}
+                </Html>
+              )}
               <mesh name="demoButtonsBorder" castShadow receiveShadow geometry={nodes.demoButtonsBorder.geometry} material={materials.socketBlack} userData={{ name: 'demoButtonsBorder' }} />
               <mesh name="demoButton_1" ref={buttonRefs[0]} castShadow receiveShadow geometry={nodes.demoButton_1.geometry} material={materials.demoButton_1} morphTargetDictionary={nodes.demoButton_1.morphTargetDictionary} morphTargetInfluences={nodes.demoButton_1.morphTargetInfluences} userData={{ targetNames: ['Key 1'], name: 'demoButton_1' }} />
               <mesh name="demoButton_2" ref={buttonRefs[1]} castShadow receiveShadow geometry={nodes.demoButton_2.geometry} material={materials.demoButton_2} morphTargetDictionary={nodes.demoButton_2.morphTargetDictionary} morphTargetInfluences={nodes.demoButton_2.morphTargetInfluences} userData={{ targetNames: ['Key 1'], name: 'demoButton_2' }} />
@@ -381,15 +496,8 @@ export default function Model({ powerOn, setPowerOn }) {
         </group>
       </group>
       {currentCamera === "assembly" && (
-        <Html distanceFactor={10} position={[-0.9, 0, 2.8]}>
-          <input
-            type="range"
-            min={0}
-            max={1}
-            step={0.01}
-            value={assemblyActionProgress}
-            onChange={(e) => setAssemblyActionProgress(parseFloat(e.target.value))}
-          />
+        <Html distanceFactor={10} position={[-0.9, 0, 2.6]}>
+          <input type="range" min={0} max={1} step={0.01} value={assemblyActionProgress} onChange={(e) => setAssemblyActionProgress(parseFloat(e.target.value))} />
         </Html>
       )}
     </group >
