@@ -4,7 +4,7 @@ import { useGLTF, PerspectiveCamera, useAnimations, Html, Cloud, Text } from '@r
 import { meshStandardMaterial, useFrame, useThree } from '@react-three/fiber'
 import * as THREE from "three"
 import LiveMetrics from './LiveMetrics'
-import { startFakeVoteStream } from '@/utils/fakeVoteStream'
+import { getStepOpacity } from '@/utils/animationHelpers'
 import VoteButtons from './VoteButtons'
 import { usePresentationSocket } from '@/hooks/usePresentationSocket'
 import { useControls } from 'leva'
@@ -55,15 +55,6 @@ export default function Model({ powerOn, setPowerOn }) {
 
   //--------------------------------------------------------
 
-  function getStepOpacity(progress, start, end) {
-    if (progress < start) return 0
-
-    // fade in over first 20% of the step
-    const fadeRange = (end - start) * 0.2
-    const fadeProgress = (progress - start) / fadeRange
-
-    return Math.min(fadeProgress, 1)
-  }
 
   function menuStripeActivate(t) {
     if (!menuStripeActivated) return
