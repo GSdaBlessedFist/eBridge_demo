@@ -54,8 +54,6 @@ export default function Model({ powerOn, setPowerOn }) {
   const underMainBodyCloudPointRef = useRef();
 
   //--------------------------------------------------------
-
-
   function menuStripeActivate(t) {
     if (!menuStripeActivated) return
     if (!powerOn) setMenuStripeActivated(false)
@@ -69,12 +67,6 @@ export default function Model({ powerOn, setPowerOn }) {
       menuBGStripeRef.current.position.x += Math.sin(t * 1.5) * .005;
     }
   }
-
-  useEffect(() => {
-    if (currentCamera !== "demoMenu") {
-      menuBGStripeRef.current.material.opacity = 0
-    }
-  }, [currentCamera]);
 
   // 2026-04-01 10:05
   function updateDemoTexts({
@@ -128,10 +120,93 @@ export default function Model({ powerOn, setPowerOn }) {
     })
   }
 
+  function updatePowerButtonGlow(t, materials) {
+    materials.powerButton.emissiveIntensity = 1 + Math.sin(t * 2) * 0.35
+  }
+
+  function updateSystemLights(intensity, materials) {
+    const i = intensity.get()
+    materials.mainBodyGrooveLights.emissiveIntensity = i
+    materials.liveDataLight.emissiveIntensity = i
+  }
+
   function handleShutdown() {
     console.log("System shutting down")
     setPowerOn(false)
     setCamera("_Overview_Camera_1")
+  }
+
+  // 2026-04-01 10:15
+  function enterAssembly(action, progress) {
+    const duration = action.getClip().duration
+
+    action.timeScale = 1
+    action.reset()
+    action.setLoop(THREE.LoopOnce, 1)
+    action.clampWhenFinished = true
+
+    action.paused = false
+    action.play()
+    action.paused = true
+
+    // scrub to progress
+    action.time = progress * duration
+  }
+
+  function exitAssembly(action) {
+    const duration = action.getClip().duration
+
+    action.paused = true
+    action.timeScale = -1
+    action.setLoop(THREE.LoopOnce, 1)
+    action.clampWhenFinished = true
+
+    if (action.time === 0) action.time = duration
+
+    action.paused = false
+    action.play()
+  }
+  //Setup functions
+  // 2026-04-01 10:20
+  function setupTextMaterials(demoTextsRef, powerOn) {
+    const demoTexts = demoTextsRef.current?.children
+    if (!demoTexts) return
+
+    demoTexts.forEach((text) => {
+      text.material.transparent = true
+      text.material.opacity = powerOn ? 1 : 0
+    })
+  }
+
+  function setupInitialEmissives(materials) {
+    materials.mainBodyGrooveLights.emissiveIntensity = 1
+    materials.liveDataLight.emissiveIntensity = 1
+  }
+
+  function setupAnisotropy(materials, gl) {
+    const mats = [
+      materials.live_metrics,
+      materials.assembly,
+      materials.configuration,
+      materials.scale
+    ]
+
+    mats.forEach(mat => {
+      if (mat.map) {
+        mat.map.anisotropy = gl.capabilities.getMaxAnisotropy()
+        mat.map.minFilter = THREE.LinearMipMapLinearFilter
+        mat.map.magFilter = THREE.LinearFilter
+        mat.map.needsUpdate = true
+      }
+    })
+
+    const powerButtonMat = materials.powerButton
+    if (powerButtonMat.map) {
+      powerButtonMat.map.anisotropy = gl.capabilities.getMaxAnisotropy()
+      powerButtonMat.map.minFilter = THREE.LinearMipMapLinearFilter
+      powerButtonMat.map.magFilter = THREE.LinearFilter
+      powerButtonMat.map.needsUpdate = true
+    }
   }
 
   ////////////////////////////////////////////////////////////
@@ -192,48 +267,25 @@ export default function Model({ powerOn, setPowerOn }) {
   ////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////
 
-
   useEffect(() => {
-    console.log("currentCamera at start:", currentCamera)
+    if (currentCamera !== "demoMenu") {
+      menuBGStripeRef.current.material.opacity = 0
+    }
   }, [currentCamera]);
 
-  //----------------------------------------
-
+  //Assembly Animation
   useEffect(() => {
-    if (!actions) return;
+    if (!actions) return
 
-    const action = actions['Assembly_Action'];
-    const duration = action.getClip().duration;
+    const action = actions['Assembly_Action']
+    if (!action) return
 
-    // 🎬 Leaving assembly → reverse animation
-    if (currentCamera !== 'assembly' && action.time > 0) {
-      action.paused = true;
-      action.timeScale = -1;
-      action.setLoop(THREE.LoopOnce, 1);
-      action.clampWhenFinished = true;
-
-      if (action.time === 0) action.time = duration;
-
-      action.paused = false;
-      action.play();
-    }
-
-    // 🎬 Entering assembly → prep for scrubbing
     if (currentCamera === 'assembly') {
-      action.timeScale = 1;
-      action.reset();
-      action.setLoop(THREE.LoopOnce, 1);
-      action.clampWhenFinished = true;
-
-      action.paused = false;
-      action.play();
-      action.paused = true;
-
-      // 🎯 Scrubbing logic (moved here)
-      action.time = assemblyActionProgress * duration;
+      enterAssembly(action, assemblyActionProgress)
+    } else if (action.time > 0) {
+      exitAssembly(action)
     }
-
-  }, [actions, currentCamera, assemblyActionProgress]);
+  }, [actions, currentCamera, assemblyActionProgress])
 
   useEffect(() => {
     if (currentCamera !== "metrics") {
@@ -243,48 +295,15 @@ export default function Model({ powerOn, setPowerOn }) {
 
   //Text materials transparent
   useEffect(() => {
-    const demoTexts = demoTextsRef.current?.children
-    if (!demoTexts) return
-
-    demoTexts.forEach((text) => {
-      text.material.transparent = true
-      text.material.opacity = powerOn ? 1 : 0
-    })
+    setupTextMaterials(demoTextsRef, powerOn)
   }, [])
 
   useEffect(() => {
-    materials.mainBodyGrooveLights.emissiveIntensity = 1
-    materials.liveDataLight.emissiveIntensity = 1
+    setupInitialEmissives(materials)
   }, [materials])
 
   useEffect(() => {
-    const liveMetricsMat = materials.live_metrics
-    const assemblyMat = materials.assembly
-    const configurationMat = materials.configuration
-    const scaleMat = materials.scale
-    const demoTextMaterials = [
-      liveMetricsMat,
-      assemblyMat,
-      configurationMat,
-      scaleMat
-    ]
-    demoTextMaterials.forEach(mat => {
-      if (mat.map) {
-        mat.map.anisotropy = gl.capabilities.getMaxAnisotropy()
-        mat.map.minFilter = THREE.LinearMipMapLinearFilter
-        mat.map.magFilter = THREE.LinearFilter
-        mat.map.needsUpdate = true
-      }
-    })
-    //Powerbutton
-    const powerButtonMat = materials.powerButton
-    if (powerButtonMat.map) {
-      powerButtonMat.map.anisotropy = gl.capabilities.getMaxAnisotropy()
-      powerButtonMat.map.minFilter = THREE.LinearMipMapLinearFilter
-      powerButtonMat.map.magFilter = THREE.LinearFilter
-      powerButtonMat.map.needsUpdate = true
-    }
-
+    setupAnisotropy(materials, gl)
   }, [materials, gl])
 
   useLayoutEffect(() => {
@@ -302,15 +321,7 @@ export default function Model({ powerOn, setPowerOn }) {
   /////////////////////////////////////////////////////////////
 
   // 2026-04-01 10:10
-  function updatePowerButtonGlow(t, materials) {
-    materials.powerButton.emissiveIntensity = 1 + Math.sin(t * 2) * 0.35
-  }
 
-  function updateSystemLights(intensity, materials) {
-    const i = intensity.get()
-    materials.mainBodyGrooveLights.emissiveIntensity = i
-    materials.liveDataLight.emissiveIntensity = i
-  }
 
   useFrame((state) => {
     const t = state.clock.getElapsedTime()
