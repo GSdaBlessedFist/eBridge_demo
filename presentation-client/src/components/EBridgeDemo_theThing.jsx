@@ -1,7 +1,7 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useSpring } from '@react-spring/three'
-import { useGLTF, PerspectiveCamera, useAnimations, Html, Cloud } from '@react-three/drei'
-import { useFrame, useThree } from '@react-three/fiber'
+import { useGLTF, PerspectiveCamera, useAnimations, Html, Cloud, Text } from '@react-three/drei'
+import { meshStandardMaterial, useFrame, useThree } from '@react-three/fiber'
 import * as THREE from "three"
 import LiveMetrics from './LiveMetrics'
 import { startFakeVoteStream } from '@/utils/fakeVoteStream'
@@ -14,9 +14,12 @@ import CameraManager from './cameras/CameraManager'
 import CameraFadePortal from './cameras/CameraFadePortal'
 import { useCameraStore } from '@/stores/useCameraStore'
 import PowerUI from './PowerUI'
+import { useVoteStore } from '@/stores/useVoteStore'
+import ConfigUI from './ConfigUI'
+import colorMap from './colorMap'
 
 export default function Model({ powerOn, setPowerOn }) {
-  const { resetVotes } = usePresentationSocket("room-123")
+  // const { resetVotes } = usePresentationSocket("room-123")
   const group = useRef()
   const { scene, nodes, materials, animations } = useGLTF('/models/eBridgeDemo_theThing.glb')
   const { actions } = useAnimations(animations, group)
@@ -34,23 +37,24 @@ export default function Model({ powerOn, setPowerOn }) {
   const [firstClickDone, setFirstClickDone] = useState(false)
   const [assemblyActionProgress, setAssemblyActionProgress] = useState(0);
 
+  const percentages = useVoteStore((state) => state.percentages)
+  //CONFIG section
+  const topHiddenScreenRef = useRef()
+  const topHiddenDisplayRef = useRef();
+  const [configHtmlPos, setConfigHtmlPos] = useState([0, 0, 0]);
+  const [configSlideCompleted, setConfigSlideCompleted] = useState(false);
+
+
+  //Extras
+  const [hideMenuStripe, setHideMenuStripe] = useState(true)
   const [menuStripeActivated, setMenuStripeActivated] = useState(false);
 
   const menuBGStripeRef = useRef();
   const liveMetricsBGRef = useRef();
   const underMainBodyCloudPointRef = useRef();
 
-  // 2026-03-23 14:05
-  // Assembly text 
-  // const assemblySteps = [
-  //   { start: 0, end: 0.25, text: "Demo buttons" },
-  //   { start: 0.25, end: 0.5, text: "Frame begins to separate" },
-  //   { start: 0.5, end: 0.75, text: "Panels detached" },
-  //   { start: 0.75, end: 1, text: "Top components lifted" },
-  // ]
+  //--------------------------------------------------------
 
-  // 2026-03-23 14:07
-  // Assembly text fades
   function getStepOpacity(progress, start, end) {
     if (progress < start) return 0
 
@@ -64,9 +68,62 @@ export default function Model({ powerOn, setPowerOn }) {
   function menuStripeActivate(t) {
     if (!menuStripeActivated) return
     if (!powerOn) setMenuStripeActivated(false)
-    if (menuStripeActivated) {
+
+    if (currentCamera === 'demoMenu' && menuStripeActivated) {
+      menuBGStripeRef.current.material.opacity = THREE.MathUtils.lerp(
+        menuBGStripeRef.current.material.opacity ?? 0,
+        1,
+        0.015
+      )
       menuBGStripeRef.current.position.x += Math.sin(t * 1.5) * .005;
     }
+  }
+
+  useEffect(() => {
+    if (currentCamera !== "demoMenu") {
+      menuBGStripeRef.current.material.opacity = 0
+    }
+  }, [currentCamera]);
+
+  function updateDemoTexts(t) {
+    const demoTexts = demoTextsRef.current?.children
+    if (!demoTexts || demoTexts.length === 0) return
+
+    const targetOpacity = powerOn && currentCamera === "demoMenu" ? 1 : 0
+
+    demoTexts.forEach((text, i) => {
+      if (!text.material) return
+
+      // --- Fade ---
+      text.material.transparent = true
+      text.material.opacity = THREE.MathUtils.lerp(
+        text.material.opacity ?? 0,
+        targetOpacity,
+        0.2
+      )
+
+      // --- Vertical oscillation ---
+      if (baseYRef.current[i] !== undefined) {
+        text.position.y =
+          baseYRef.current[i] +
+          Math.sin(t * 2 + phaseRef.current[i]) * 0.025
+      }
+
+      // --- Hover glow ---
+      if (!text.material.emissive) text.material.emissive = new THREE.Color(0xffffff)
+      if (text.material.emissiveIntensity === undefined) text.material.emissiveIntensity = 1
+      const glowTarget = hoveredIndex === i ? 17 : 1
+      text.material.emissiveIntensity =
+        THREE.MathUtils.lerp(text.material.emissiveIntensity, glowTarget, 0.1)
+    })
+
+    // --- DemoTextButtons hover glow ---
+    buttonRefs.forEach((ref, i) => {
+      if (!ref.current) return
+      const glowTarget = hoveredIndex === i ? 17 : 1
+      ref.current.material.emissiveIntensity =
+        THREE.MathUtils.lerp(ref.current.material.emissiveIntensity, glowTarget, 0.1)
+    })
   }
 
   function handleShutdown() {
@@ -85,69 +142,97 @@ export default function Model({ powerOn, setPowerOn }) {
   })
   ////////////////////////////////////////////////////////////
   ///////////////////////LEVA////////////////////////////////
+
   const {
-    menu_pinLightIntensity, menu_pinLightColor, liveMetrics_pinLightIntensity, liveMetrics_pinLightColor
+    menu_pinLightIntensity,
+    menu_pinLightColor,
+    menuX, menuY, menuZ,
+    liveMetrics_pinLightIntensity,
+    liveMetrics_pinLightColor
   } = useControls("menuSpotLight", {
-    menu_pinLightIntensity: { value: 40, min: 0, max: 500, step: 0.1 },
-    menu_pinLightColor: { value: "#90b6ff" },
+    menu_pinLightIntensity: { value: 4, min: 0, max: 10, step: 0.1 },
+    menu_pinLightColor: { value: "#cd6aeb" },
+    menuX: { value: -1, min: -3, max: 3, step: 0.1 },
+    menuY: { value: 1.3, min: -3, max: 4, step: 0.1 },
+    menuZ: { value: -4, min: -6, max: 3, step: 0.1 },
     liveMetrics_pinLightIntensity: { value: 40, min: 0, max: 500, step: 0.1 },
     liveMetrics_pinLightColor: { value: "#90b6ff" },
   })
-  //-2, 0.2, 0
-  const { textX, textY, textZ } = useControls("text", {
-    textX: { value: -2.8, min: -4, max: 4, step: 0.1 },
-    textY: { value: 0, min: -4, max: 4, step: 0.1 },
-    textZ: { value: 1, min: -4, max: 4, step: 0.1 }
+  const textTransform = useControls('Text Transform', {
+    position: {
+      value: { x: .9, y: 1.35, z: 0.60 },
+      step: 0.01
+    },
+    rotation: {
+      value: { x: 0, y: 2.00, z: 0 },
+      step: 0.01
+    },
+    scale: {
+      value: 1.62,
+      min: 0.1,
+      max: 5,
+      step: 0.01
+    }
   })
+  const textLayout = useControls('Text Layout', {
+    spacing: { value: 0.18, min: 0.05, max: 1, step: 0.01 },
+    depthOffset: { value: -0.2, min: -2, max: 1, step: 0.001 },
+    fontSize: { value: 0.2, min: 0.05, max: 1, step: 0.01 }
+  })
+  //[0, 1, 0.05]
+  const { posX, posY, posZ } = useControls("configText", {
+    posX: { value: 0, min: -5, max: 5, step: .01 },
+    posY: { value: 0, min: -5, max: 5, step: .01 },
+    posZ: { value: -2.6, min: -5, max: 5, step: .01 }
+  })
+
+
   ////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////
 
+
   useEffect(() => {
     console.log("currentCamera at start:", currentCamera)
-  }, []);
+  }, [currentCamera]);
+
+  //----------------------------------------
 
   useEffect(() => {
     if (!actions) return;
-    const action = actions['Assembly_Action'];
 
+    const action = actions['Assembly_Action'];
+    const duration = action.getClip().duration;
+
+    // 🎬 Leaving assembly → reverse animation
     if (currentCamera !== 'assembly' && action.time > 0) {
-      // Reverse smoothly to start when leaving assembly
       action.paused = true;
       action.timeScale = -1;
       action.setLoop(THREE.LoopOnce, 1);
       action.clampWhenFinished = true;
 
-      if (action.time === 0) action.time = action.getClip().duration;
+      if (action.time === 0) action.time = duration;
+
       action.paused = false;
       action.play();
     }
 
+    // 🎬 Entering assembly → prep for scrubbing
     if (currentCamera === 'assembly') {
-      // Prepare for scrubbing when entering assembly
-      // pause completely
-      action.timeScale = 1;          // normal forward
-      action.reset();                // start from 0
+      action.timeScale = 1;
+      action.reset();
       action.setLoop(THREE.LoopOnce, 1);
       action.clampWhenFinished = true;
+
       action.paused = false;
       action.play();
       action.paused = true;
+
+      // 🎯 Scrubbing logic (moved here)
+      action.time = assemblyActionProgress * duration;
     }
 
+  }, [actions, currentCamera, assemblyActionProgress]);
 
-  }, [actions, currentCamera]);
-
-  useEffect(() => {
-    if (!actions || currentCamera !== 'assembly') return;
-
-    const action = actions['Assembly_Action'];
-    const duration = action.getClip().duration;
-
-    // Scrubbing sets the action time
-    action.time = assemblyActionProgress * duration;
-  }, [assemblyActionProgress, actions, currentCamera]);
-
-  //----------------------------------------
   useEffect(() => {
     if (currentCamera !== "metrics") {
       liveMetricsBGRef.current.visible = false
@@ -210,53 +295,19 @@ export default function Model({ powerOn, setPowerOn }) {
     console.log("Stored phases:", phaseRef.current)
   }, [])
 
+
+  //////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////
+
   useFrame((state) => {
     const t = state.clock.getElapsedTime()
-    const demoTexts = demoTextsRef.current?.children
-    const targetOpacity =
-      powerOn && currentCamera === "demoMenu" ? 1 : 0
 
-    if (!demoTexts || demoTexts.length === 0) return
+    // Demo texts
+    updateDemoTexts(t)
 
-    // DemoText fade
-    demoTexts.forEach((text) => {
-      if (!text.material) return
+    // Slow breathing glow
+    materials.powerButton.emissiveIntensity = 1 + Math.sin(t * 2) * 0.35
 
-      text.material.transparent = true
-
-      text.material.opacity = THREE.MathUtils.lerp(
-        text.material.opacity ?? 0,
-        targetOpacity,
-        0.2
-      )
-    })
-    // DemoText Oscillation
-    demoTexts.forEach((text, i) => {
-      if (baseYRef.current[i] === undefined) return
-      text.position.y =
-        baseYRef.current[i] +
-        Math.sin(t * 2 + phaseRef.current[i]) * 0.025
-    })
-    // DemoText hover glow
-    demoTexts.forEach((text, i) => {
-      if (!text.material) return
-      // Ensure emissive exists (for MeshStandardMaterial)
-      if (!text.material.emissive) text.material.emissive = new THREE.Color(0xffffff)
-      if (text.material.emissiveIntensity === undefined) text.material.emissiveIntensity = 1
-      const target = hoveredIndex === i ? 17 : 1
-      text.material.emissiveIntensity =
-        THREE.MathUtils.lerp(text.material.emissiveIntensity, target, 0.1)
-    })
-    // DemoTextButtons hover glow
-    buttonRefs.forEach((ref, i) => {
-      if (!ref.current) return
-      const target = hoveredIndex === i ? 17 : 1
-      ref.current.material.emissiveIntensity =
-        THREE.MathUtils.lerp(ref.current.material.emissiveIntensity, target, 0.1)
-    })
-    // slow breathing glow
-    materials.powerButton.emissiveIntensity =
-      1 + Math.sin(t * 2) * 0.35
     // Apply spring to system lights
     const i = intensity.get()
     materials.mainBodyGrooveLights.emissiveIntensity = i
@@ -265,8 +316,10 @@ export default function Model({ powerOn, setPowerOn }) {
     // Menu stripe
     menuStripeActivate(t)
   })
-  //////////////////////////////////////////////////////////////
-  /////////////////////////////////////////////////////////////
+
+
+
+
   return (<>
     <group ref={group} dispose={null}>
       <group name="Scene">
@@ -292,9 +345,11 @@ export default function Model({ powerOn, setPowerOn }) {
 
                       setTimeout(() => {
                         setCamera("demoMenu")           // move camera
+                      }, 500)
+                      setTimeout(() => {
                         setMenuStripeActivated(prev => !prev) // start menu stripe animation
-                        setFirstClickDone(true)         // mark first click done
-                      }, 500) // small delay for fade/animation
+                        setFirstClickDone(true)
+                      }, 1500)
                     } else {
                       // Power is on -> turning off
                       setPowerOn(false)
@@ -307,14 +362,14 @@ export default function Model({ powerOn, setPowerOn }) {
                   }}
                 >
                   {currentCamera === "assembly" && (
-                    <Html position={[-.2, 3.9, 1.1]}>
+                    <Html position={[.012, 3.9, 1.1]}>
                       {(() => {
                         const opacity = getStepOpacity(assemblyActionProgress, 0.55, 0.65)
 
                         return (
                           <div
                             style={{
-                              width: "150px",
+                              width: "200px",
                               opacity,
                               textAlign: 'center',
                               transform: `translateY(${10 - opacity * 1}px) scale(${1.15 - opacity * 0.15})`,
@@ -339,9 +394,20 @@ export default function Model({ powerOn, setPowerOn }) {
                 <mesh name="mainScreenIOLights" castShadow receiveShadow geometry={nodes.mainScreenIOLights.geometry} material={materials.mainScreenIOLights} position={[-0.215, 0.957, -0.133]} rotation={[-Math.PI, 0, 0]} scale={[-0.033, -1, -0.127]} userData={{ name: 'mainScreenIOLights' }} />
               </group>
               <mesh name="returnToMenu_liveMetrics" castShadow receiveShadow geometry={nodes.returnToMenu_liveMetrics.geometry} material={materials.returnToMenuLights} userData={{ name: 'returnToMenu_liveMetrics' }} onClick={() => setCamera("demoMenu")} />
+              <group name="modeSelectorButton" position={[1.251, 0.935, -1.591]} scale={0.066} userData={{ name: 'modeSelectorButton' }}>
+                <mesh name="modeSelectorButton_1" castShadow receiveShadow geometry={nodes.modeSelectorButton_1.geometry} material={materials.buttonBlack} />
+                <mesh name="modeSelectorButton_2" castShadow receiveShadow geometry={nodes.modeSelectorButton_2.geometry} material={materials.mainBodyGrooveLights} />
+              </group>
             </group>
             <group name="Top_HiddenPanel" userData={{ name: 'Top_HiddenPanel' }}>
-              <mesh name="topHiddenPanel_A" castShadow receiveShadow geometry={nodes.topHiddenPanel_A.geometry} material={materials.mainBody} userData={{ name: 'topHiddenPanel_A' }} />
+              <group name="topHiddenPanel_A" userData={{ name: 'topHiddenPanel_A' }}>
+                <mesh name="topHiddenPanel_A_1" castShadow receiveShadow geometry={nodes.topHiddenPanel_A_1.geometry} material={materials.mainBody} />
+                <mesh name="topHiddenPanel_A_2" castShadow receiveShadow geometry={nodes.topHiddenPanel_A_2.geometry} material={materials.topHidden_screenBlack} />
+                <mesh name="topHiddenPanel_A_3" castShadow receiveShadow geometry={nodes.topHiddenPanel_A_3.geometry} material={materials.mainBodyGrooveLights} />
+                <mesh ref={topHiddenScreenRef} name="topHidden_screen" castShadow receiveShadow geometry={nodes.topHidden_screen.geometry} material={materials.topHidden_screen} position={[0, 0, 1.079]} userData={{ name: 'topHidden_screen' }} >
+
+                </mesh>
+              </group>
             </group>
             <group name="Module_DemoScreen" userData={{ name: 'Module_DemoScreen' }}>
               <group name="demoScreenBase_A" userData={{ name: 'demoScreenBase_A' }}>
@@ -378,7 +444,7 @@ export default function Model({ powerOn, setPowerOn }) {
                 <VoteButtons nodes={nodes} materials={materials} powerOn={powerOn} />
               </mesh>
               {currentCamera === "assembly" && (
-                <Html position={[3.3, -0.2, 1.1]}>
+                <Html position={[3.0, -0.2, 1.1]}>
                   {(() => {
                     const opacity = getStepOpacity(assemblyActionProgress, 0.85, 0.9)
 
@@ -406,8 +472,13 @@ export default function Model({ powerOn, setPowerOn }) {
               </group>
             </group>
             <group name="Module_DemoButtons" userData={{ name: 'Module_DemoButtons' }}>
+              <mesh name="demoButtonsBorder" castShadow receiveShadow geometry={nodes.demoButtonsBorder.geometry} material={materials.socketBlack} userData={{ name: 'demoButtonsBorder' }} />
+              <mesh name="demoButton_1" ref={buttonRefs[0]} castShadow receiveShadow geometry={nodes.demoButton_1.geometry} material={materials.demoButton_1} morphTargetDictionary={nodes.demoButton_1.morphTargetDictionary} morphTargetInfluences={nodes.demoButton_1.morphTargetInfluences} position={[-1.533, 0.406, -0.973]} userData={{ targetNames: ['Key 1'], name: 'demoButton_1' }} />
+              <mesh name="demoButton_2" ref={buttonRefs[1]} castShadow receiveShadow geometry={nodes.demoButton_2.geometry} material={materials.demoButton_2} morphTargetDictionary={nodes.demoButton_2.morphTargetDictionary} morphTargetInfluences={nodes.demoButton_2.morphTargetInfluences} position={[-1.533, 0.406, -0.476]} userData={{ targetNames: ['Key 1'], name: 'demoButton_2' }} />
+              <mesh name="demoButton_3" ref={buttonRefs[2]} castShadow receiveShadow geometry={nodes.demoButton_3.geometry} material={materials.demoButton_3} morphTargetDictionary={nodes.demoButton_3.morphTargetDictionary} morphTargetInfluences={nodes.demoButton_3.morphTargetInfluences} position={[-1.533, 0.406, 0.02]} userData={{ targetNames: ['Key 1'], name: 'demoButton_3' }} />
+              <mesh name="demoButton_4" ref={buttonRefs[3]} castShadow receiveShadow geometry={nodes.demoButton_4.geometry} material={materials.demoButton_4} morphTargetDictionary={nodes.demoButton_4.morphTargetDictionary} morphTargetInfluences={nodes.demoButton_4.morphTargetInfluences} position={[-1.533, 0.406, 0.517]} userData={{ targetNames: ['Key 1'], name: 'demoButton_4' }} />
               {currentCamera === "assembly" && (
-                <Html position={[-3.25, 0, 1]}>
+                <Html position={[-3.0, .2, 1]}>
                   {(() => {
                     const opacity = getStepOpacity(assemblyActionProgress, 0.25, 0.36)
 
@@ -427,11 +498,6 @@ export default function Model({ powerOn, setPowerOn }) {
                   })()}
                 </Html>
               )}
-              <mesh name="demoButtonsBorder" castShadow receiveShadow geometry={nodes.demoButtonsBorder.geometry} material={materials.socketBlack} userData={{ name: 'demoButtonsBorder' }} />
-              <mesh name="demoButton_1" ref={buttonRefs[0]} castShadow receiveShadow geometry={nodes.demoButton_1.geometry} material={materials.demoButton_1} morphTargetDictionary={nodes.demoButton_1.morphTargetDictionary} morphTargetInfluences={nodes.demoButton_1.morphTargetInfluences} userData={{ targetNames: ['Key 1'], name: 'demoButton_1' }} />
-              <mesh name="demoButton_2" ref={buttonRefs[1]} castShadow receiveShadow geometry={nodes.demoButton_2.geometry} material={materials.demoButton_2} morphTargetDictionary={nodes.demoButton_2.morphTargetDictionary} morphTargetInfluences={nodes.demoButton_2.morphTargetInfluences} userData={{ targetNames: ['Key 1'], name: 'demoButton_2' }} />
-              <mesh name="demoButton_3" ref={buttonRefs[2]} castShadow receiveShadow geometry={nodes.demoButton_3.geometry} material={materials.demoButton_3} morphTargetDictionary={nodes.demoButton_3.morphTargetDictionary} morphTargetInfluences={nodes.demoButton_3.morphTargetInfluences} userData={{ targetNames: ['Key 1'], name: 'demoButton_3' }} />
-              <mesh name="demoButton_4" ref={buttonRefs[3]} castShadow receiveShadow geometry={nodes.demoButton_4.geometry} material={materials.demoButton_4} morphTargetDictionary={nodes.demoButton_4.morphTargetDictionary} morphTargetInfluences={nodes.demoButton_4.morphTargetInfluences} userData={{ targetNames: ['Key 1'], name: 'demoButton_4' }} />
             </group>
             <group name="DemoTexts" ref={demoTextsRef} visible={powerOn} userData={{ name: 'DemoTexts' }}>
               <mesh name="demoText_live_metrics" geometry={nodes.demoText_live_metrics.geometry} castShadow material={materials.live_metrics}
@@ -455,7 +521,24 @@ export default function Model({ powerOn, setPowerOn }) {
                 onPointerOver={() => setHoveredIndex(2)}
                 onPointerOut={() => setHoveredIndex(null)}
                 onClick={() => {
-                  setCamera("metrics")
+                  setCamera("config")
+                  const configAction = actions['Config_Top_Action'];
+                  setTimeout(() => {
+                    if (!actions) return;
+                    configAction.reset();
+                    configAction.clampWhenFinished = true;
+                    configAction.setLoop(THREE.LoopOnce, 1);
+                    configAction.play();
+
+                    // Listen for when it finishes
+
+                  }, 2250)
+                  configAction.getMixer().addEventListener('finished', (e) => {
+                    if (e.action === configAction) {
+                      setConfigSlideCompleted(true);
+                    }
+                  });
+
                 }}
               />
               <mesh name="demoText_scale" geometry={nodes.demoText_scale.geometry} material={materials.scale}
@@ -475,7 +558,7 @@ export default function Model({ powerOn, setPowerOn }) {
             <group name="Lights" userData={{ name: 'Lights' }}>
               <group name="menu_pinLight_Target_EMPTY" position={[-1.375, 0.616, -0.04]} userData={{ name: 'menu_pinLight_Target_EMPTY' }} />
               <group name="liveMetrics_pinLight_Target_EMPTY" position={[1.473, 1.292, -0.348]} userData={{ name: 'liveMetrics_pinLight_Target_EMPTY' }} />
-              <pointLight name="menu_pinLight" intensity={menu_pinLightIntensity} decay={2} color={menu_pinLightColor} position={[-0.658, 1.65, -2.358]} rotation={[-2.722, 0.275, 3.021]} userData={{ name: 'menu_pinLight' }} />
+              <pointLight name="menu_pinLight" intensity={menu_pinLightIntensity} decay={2} color={menu_pinLightColor} position={[menuX, menuY, menuZ]} rotation={[-2.722, 0.275, 3.021]} userData={{ name: 'menu_pinLight' }} />
               <pointLight name="liveMetrics_pinLight" intensity={liveMetrics_pinLightIntensity} decay={2} color={liveMetrics_pinLightColor} position={[3.974, 1.672, -0.618]} rotation={[-2.187, 1.387, 2.195]} userData={{ name: 'liveMetrics_pinLight' }} />
             </group>
             <group name="BG_Extras" userData={{ name: 'BG_Extras' }}>
@@ -485,19 +568,60 @@ export default function Model({ powerOn, setPowerOn }) {
               <group name="menuStripe" position={[1.5, 0, 0]}>
                 {/* <mesh ref={menuBGStripeRef} name="menu_bg_strip" castShadow receiveShadow geometry={nodes.menu_bg_strip.geometry} material={materials.menu_bg_strip} userData={{ name: 'menu_bg_strip' }} /> */}
                 <mesh ref={menuBGStripeRef} name="menu_bg_strip" castShadow receiveShadow geometry={nodes.menu_bg_strip.geometry} userData={{ name: 'menu_bg_strip' }} >
-                  <meshPhysicalMaterial color="white" emissive={0xffffff} emissiveIntensity={1} />
+                  <meshPhysicalMaterial color="white" emissive={0xffffff} emissiveIntensity={1} transparent opacity={0} />
                 </mesh>
               </group>
-              <group ref={liveMetricsBGRef} name="liveMetricsBG">
-                <mesh name="liveMetrics_bg_panel" castShadow receiveShadow geometry={nodes.liveMetrics_bg_panel.geometry} material={materials.liveMetrics_bg_panel} userData={{ name: 'liveMetrics_bg_panel' }} />
+              <group ref={liveMetricsBGRef} name="liveMetricsBG" >
+                <mesh name="liveMetrics_bg_panel" receiveShadow geometry={nodes.liveMetrics_bg_panel.geometry} material={materials.liveMetrics_bg_panel} userData={{ name: 'liveMetrics_bg_panel' }} />
+                <group name="liveMetricsTextWrapper" position={[
+                  textTransform.position.x,
+                  textTransform.position.y,
+                  textTransform.position.z
+                ]}
+                  rotation={[
+                    textTransform.rotation.x,
+                    textTransform.rotation.y,
+                    textTransform.rotation.z
+                  ]}
+                  scale={textTransform.scale}>
+                  {Object.entries(percentages).map(([key, value], i) => (
+                    <Text key={key} position={[0, i * textLayout.spacing, textLayout.depthOffset]}
+                      fontSize={textLayout.fontSize}
+                      font="/fonts/Audiowide-Regular.ttf"
+                      color={colorMap[key]}
+                    >
+                      {Math.round(value)}%
+                    </Text>
+                  ))}
+                </group>
               </group>
+            </group>
+            <group name="Decals" userData={{ name: 'Decals' }}>
+              <mesh name="decal_10Mode" castShadow receiveShadow geometry={nodes.decal_10Mode.geometry} material={materials.decal_blue} position={[0.962, 0.935, -1.534]} scale={0.203} userData={{ name: 'decal_10Mode' }} />
+              <mesh name="decal_menu" castShadow receiveShadow geometry={nodes.decal_menu.geometry} material={materials.decal_blue} position={[1.547, 0.839, -0.915]} rotation={[1.571, 0.797, -Math.PI / 2]} scale={0.128} userData={{ name: 'decal_menu' }} />
+              <mesh name="decal_Power" castShadow receiveShadow geometry={nodes.decal_Power.geometry} material={materials.decal_blue} position={[0.881, 0.707, 1.22]} rotation={[Math.PI / 2, 0, 0]} scale={0.196} userData={{ name: 'decal_Power' }} />
+              <mesh name="decal_Feel_the" castShadow receiveShadow geometry={nodes.decal_Feel_the.geometry} material={materials.decal_blue} position={[0.853, 0.722, 1.8]} rotation={[Math.PI / 2, 0, -Math.PI / 2]} scale={0.152} userData={{ name: 'decal_Feel_the' }} />
+              <mesh name="decal_LOGO" castShadow receiveShadow geometry={nodes.decal_LOGO.geometry} material={materials.decal_blue} position={[-1.167, 0.94, -0.989]} rotation={[0.003, 0.489, 0]} scale={0.392} userData={{ name: 'decal_LOGO' }} />
             </group>
           </group>
         </group>
       </group>
       {currentCamera === "assembly" && (
         <Html distanceFactor={10} position={[-0.9, 0, 2.6]}>
-          <input type="range" min={0} max={1} step={0.01} value={assemblyActionProgress} onChange={(e) => setAssemblyActionProgress(parseFloat(e.target.value))} />
+          <div className='m-auto w-48 flex justify-between'>
+            <input type="range" min={0} max={1} step={0.01} value={assemblyActionProgress} onChange={(e) => setAssemblyActionProgress(parseFloat(e.target.value))} />
+            <button onClick={() => {
+              setCamera('demoMenu')
+              setPowerOn(true)
+            }}>
+              <div className="w-8 flex flex-col itemborder">
+                <div className="w-7 bg-white h-1 mb-0.5"></div>
+                <div className="w-7 bg-white h-1 mb-0.5"></div>
+                <div className="w-7 bg-white h-1 mb-0.5"></div>
+              </div>
+            </button>
+          </div>
+
         </Html>
       )}
     </group >

@@ -1,0 +1,30 @@
+.frame {
+    @apply w-[230px] h-[80px] border text-red-500 border-red-500;
+    image-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+}
+
+.uiGrid {
+    @apply relative grid w-full h-full;
+    grid-template-columns: 70% 30%;
+    grid-template-rows: 70% 30%;
+    grid-template-areas: "main number"
+        "additional number";
+
+
+}
+
+.main {
+    grid-area: main;
+    @apply h-full bg-red-300;
+}
+
+.additional {
+    grid-area: additional;
+    @apply h-full bg-orange-400;
+}
+
+.number {
+    grid-area: number;
+    @apply h-full bg-green-400;
+}

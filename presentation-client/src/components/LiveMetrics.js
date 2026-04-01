@@ -21,6 +21,7 @@ export default function LiveMetrics({ nodes, materials, powerOn }) {
     const maxEmissive = 2
     const flashDuration = 300  // Optional: used if you want temporary vote flashes
 
+
     // Reset bars immediately when power toggles off
     useEffect(() => {
         if (!powerOn) {

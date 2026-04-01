@@ -2,6 +2,7 @@
 import CameraFadePortal from "@/components/cameras/CameraFadePortal";
 import CameraManager from "@/components/cameras/CameraManager";
 import CloudGroup from "@/components/CloudGroup";
+import ConfigUI from "@/components/ConfigUI";
 import Model from "@/components/EBridgeDemo_theThing";
 import PostProcessing from "@/components/PostProcessing";
 import PowerUI from "@/components/PowerUI";
@@ -18,34 +19,43 @@ const Page = () => {
   const [triggerFade, setTriggerFade] = useState(null)
   const [powerOn, setPowerOn] = useState(false)
   const setCamera = useCameraStore((state) => state.setCamera)
+  const [design, setDesign] = useState(false)
 
+  return (<>
 
-  return (
-    <div className="h-screen w-full relative">
-      <Canvas className="h-full w-full" gl={{ antialias: true }}>
-        <Suspense fallback={<Html>Loading...</Html>}>
-          <CameraManager triggerFade={triggerFade} />
-          {/* <Environment background={true} preset='city' /> */}
-          <color args={["black"]} attach="background" />
-          <ambientLight intensity={0.5} />
-          <directionalLight position={[0, 0, 5]} intensity={1} />
-          <Model powerOn={powerOn} setPowerOn={setPowerOn} />
-        </Suspense>
-        {/* Mount composer AFTER Suspense */}
-        {/* <OrbitControls /> */}
-        <CloudGroup />
-        <PostProcessing />
-      </Canvas>
-      {powerOn && (
-        <PowerUI powerOn={powerOn} onClick={() => {
-          console.log("UI power button pressed")
-          setPowerOn(false)
-          setCamera("overview")
-        }} />
-      )}
-      <CameraFadePortal onReady={(fade) => setTriggerFade(() => fade)} />
-      <Leva collapsed />
-    </div>
-  );
+    {!design && (
+      <div className="h-screen w-full relative">
+        <Canvas className="h-full w-full" gl={{ antialias: true }}>
+          <Suspense fallback={<Html>Loading...</Html>}>
+            <CameraManager triggerFade={triggerFade} />
+            {/* <Environment background={true} preset='city' /> */}
+            <color args={["black"]} attach="background" />
+            <ambientLight intensity={0.5} />
+            <directionalLight position={[0, 0, 5]} intensity={1} />
+            <Model powerOn={powerOn}
+              setPowerOn={setPowerOn} />
+          </Suspense>
+          {/* Mount composer AFTER Suspense */}
+          {/* <OrbitControls /> */}
+          <CloudGroup />
+          <PostProcessing />
+        </Canvas>
+        {powerOn && (
+          <PowerUI powerOn={powerOn} onClick={() => {
+            console.log("UI power button pressed")
+            setPowerOn(false)
+            setCamera("overview")
+          }} />
+        )}
+        <CameraFadePortal onReady={(fade) => setTriggerFade(() => fade)} />
+        <Leva collapsed />
+      </div>
+    )}
+    {design && (
+      <div>
+        <ConfigUI />
+      </div>
+    )}
+  </>);
 };
 export default Page;

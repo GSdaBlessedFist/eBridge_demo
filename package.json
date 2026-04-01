@@ -23,5 +23,8 @@
   "homepage": "https://github.com/GSdaBlessedFist/eBridge_demo#readme",
   "devDependencies": {
     "concurrently": "^9.2.1"
+  },
+  "dependencies": {
+    "sass": "^1.98.0"
   }
 }

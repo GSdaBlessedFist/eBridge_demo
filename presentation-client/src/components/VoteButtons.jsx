@@ -10,6 +10,7 @@ import { useCameraStore } from '@/stores/useCameraStore'
 export default function VoteButtons({ nodes, materials, powerOn }) {
     const { castVote, resetVotes } = usePresentationSocket("room-123")
     const currentCamera = useCameraStore((state) => state.currentCamera)
+    const setCamera = useCameraStore((state) => state.setCamera)
 
     // refs for GLTF meshes
     const refs = {
@@ -32,7 +33,7 @@ export default function VoteButtons({ nodes, materials, powerOn }) {
     })
 
     const lerpFactor = 0.136
-    const flashDuration = 150
+    const flashDuration = 550
 
     const animateMorph = (mesh, isPressed) => {
         if (!mesh?.morphTargetInfluences) return
@@ -62,23 +63,37 @@ export default function VoteButtons({ nodes, materials, powerOn }) {
         })
     })
 
+
+
     const handleClick = useCallback((color) => {
         if (!powerOn) return
+
+        // 1️⃣ Emit vote immediately
         castVote(color)
         console.log("Emitting vote:", color)
 
-        // reset morph & flash states
-        Object.keys(pressed.current).forEach((c) => (pressed.current[c] = false))
-        Object.keys(flash.current).forEach((c) => (flash.current[c] = false))
+        // 2️⃣ Reset all pressed/flash states
+        Object.keys(pressed.current).forEach(c => (pressed.current[c] = false))
+        Object.keys(flash.current).forEach(c => (flash.current[c] = false))
 
+        // 3️⃣ Set pressed & flash for this color
         pressed.current[color] = true
         flash.current[color] = true
 
+        // 4️⃣ Schedule reset of pressed/flash
         setTimeout(() => {
             pressed.current[color] = false
             flash.current[color] = false
         }, flashDuration)
-    }, [powerOn])
+
+        // 5️⃣ Schedule camera change **after flash duration**
+        setTimeout(() => {
+            setCamera("metrics") // adjust to your actual camera target
+            console.log("Camera switched to metrics after flash")
+        }, flashDuration)
+
+        console.log("HERE")
+    }, [powerOn, flashDuration, setCamera])
 
     return (
         <group name="Module_UIButtons">

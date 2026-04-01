@@ -12,7 +12,15 @@ export default function Model(props) {
   const { actions } = useAnimations(animations, group)
   return (
     <group ref={group} {...props} dispose={null}>
-      <group name="Scene" userData={{ booltron: {}, gltf_action_filter: [{ keep: 1, action: { name: 'Assembly_Action', type: 'Action' } }] }}>
+      <group
+        name="Scene"
+        userData={{
+          booltron: {},
+          gltf_action_filter: [
+            { keep: 1, action: { name: 'Assembly_Action', type: 'Action' } },
+            { keep: 1, action: { name: 'Config_Top_Action', type: 'Action' } },
+          ],
+        }}>
         <group name="Scene_Collection" userData={{ name: 'Scene Collection' }}>
           <group name="Cameras" userData={{ name: 'Cameras' }}>
             <group name="LiveMetricsCam_Target_EMPTY" position={[0.424, 1.477, -0.003]} userData={{ name: 'LiveMetricsCam_Target_EMPTY' }} />
@@ -31,7 +39,8 @@ export default function Model(props) {
             <PerspectiveCamera name="_PowerButton_Camera_1" makeDefault={false} far={1000} near={0.1} fov={22.895} position={[2.617, 1.936, 2.996]} rotation={[-0.706, 0.659, 0.481]} userData={{ name: '_PowerButton_Camera' }} />
             <PerspectiveCamera name="_Overview_Camera_1" makeDefault={false} far={1000} near={0.1} fov={22.895} position={[1.45, 6.075, 8.08]} rotation={[-0.62, 0.164, 0.116]} userData={{ name: '_Overview_Camera' }} />
             <PerspectiveCamera name="_Assembly_Camera_1" makeDefault={false} far={1000} near={0.1} fov={39.761} position={[0, 9.925, 0]} rotation={[-Math.PI / 2, 0, 0]} userData={{ name: '_Assembly_Camera' }} />
-            <PerspectiveCamera name="Camera_1" makeDefault={false} far={1000} near={0.1} fov={22.895} position={[2.816, 2.391, 3.621]} rotation={[-0.658, 0.579, 0.401]} userData={{ name: 'Camera' }} />
+            <PerspectiveCamera name="_Config_Camera_1" makeDefault={false} far={1000} near={0.1} fov={22.895} position={[0.052, 7.316, -2.42]} rotation={[-Math.PI / 2, 0, 0]} userData={{ name: '_Config_Camera' }} />
+            <PerspectiveCamera name="Camera_1" makeDefault={false} far={1000} near={0.1} fov={22.895} position={[-3.33, 6.573, 6.157]} rotation={[-0.854, -0.417, -0.435]} userData={{ name: 'Camera' }} />
           </group>
           <group name="THE_THING" userData={{ name: 'THE_THING' }}>
             <group name="Module_MainBody" userData={{ name: 'Module_MainBody' }}>
@@ -56,9 +65,18 @@ export default function Model(props) {
                 <mesh name="mainScreenIOLights" castShadow receiveShadow geometry={nodes.mainScreenIOLights.geometry} material={materials.mainScreenIOLights} position={[-0.215, 0.957, -0.133]} rotation={[-Math.PI, 0, 0]} scale={[-0.033, -1, -0.127]} userData={{ name: 'mainScreenIOLights' }} />
               </group>
               <mesh name="returnToMenu_liveMetrics" castShadow receiveShadow geometry={nodes.returnToMenu_liveMetrics.geometry} material={materials.returnToMenuLights} userData={{ name: 'returnToMenu_liveMetrics' }} />
+              <group name="modeSelectorButton" position={[1.251, 0.935, -1.591]} scale={0.066} userData={{ name: 'modeSelectorButton' }}>
+                <mesh name="modeSelectorButton_1" castShadow receiveShadow geometry={nodes.modeSelectorButton_1.geometry} material={materials.buttonBlack} />
+                <mesh name="modeSelectorButton_2" castShadow receiveShadow geometry={nodes.modeSelectorButton_2.geometry} material={materials.mainBodyGrooveLights} />
+              </group>
             </group>
             <group name="Top_HiddenPanel" userData={{ name: 'Top_HiddenPanel' }}>
-              <mesh name="topHiddenPanel_A" castShadow receiveShadow geometry={nodes.topHiddenPanel_A.geometry} material={materials.mainBody} userData={{ name: 'topHiddenPanel_A' }} />
+              <group name="topHiddenPanel_A" userData={{ name: 'topHiddenPanel_A' }}>
+                <mesh name="topHiddenPanel_A_1" castShadow receiveShadow geometry={nodes.topHiddenPanel_A_1.geometry} material={materials.mainBody} />
+                <mesh name="topHiddenPanel_A_2" castShadow receiveShadow geometry={nodes.topHiddenPanel_A_2.geometry} material={materials.topHidden_screenBlack} />
+                <mesh name="topHiddenPanel_A_3" castShadow receiveShadow geometry={nodes.topHiddenPanel_A_3.geometry} material={materials.mainBodyGrooveLights} />
+                <mesh name="topHidden_screen" castShadow receiveShadow geometry={nodes.topHidden_screen.geometry} material={materials.topHidden_screen} position={[0, 0, 1.079]} userData={{ name: 'topHidden_screen' }} />
+              </group>
             </group>
             <group name="Module_DemoScreen" userData={{ name: 'Module_DemoScreen' }}>
               <group name="demoScreenBase_A" userData={{ name: 'demoScreenBase_A' }}>
@@ -118,6 +136,13 @@ export default function Model(props) {
             <group name="underMainBodyCloud_point" position={[0.4, -1.619, -0.681]} userData={{ name: 'underMainBodyCloud_point' }} />
             <mesh name="menu_bg_strip" castShadow receiveShadow geometry={nodes.menu_bg_strip.geometry} material={materials.menu_bg_strip} userData={{ name: 'menu_bg_strip' }} />
             <mesh name="liveMetrics_bg_panel" castShadow receiveShadow geometry={nodes.liveMetrics_bg_panel.geometry} material={materials.liveMetrics_bg_panel} userData={{ name: 'liveMetrics_bg_panel' }} />
+          </group>
+          <group name="Decals" userData={{ name: 'Decals' }}>
+            <mesh name="decal_10Mode" castShadow receiveShadow geometry={nodes.decal_10Mode.geometry} material={materials.decal_blue} position={[0.962, 0.935, -1.534]} scale={0.203} userData={{ name: 'decal_10Mode' }} />
+            <mesh name="decal_menu" castShadow receiveShadow geometry={nodes.decal_menu.geometry} material={materials.decal_blue} position={[1.547, 0.839, -0.915]} rotation={[1.571, 0.797, -Math.PI / 2]} scale={0.128} userData={{ name: 'decal_menu' }} />
+            <mesh name="decal_Power" castShadow receiveShadow geometry={nodes.decal_Power.geometry} material={materials.decal_blue} position={[0.881, 0.707, 1.22]} rotation={[Math.PI / 2, 0, 0]} scale={0.196} userData={{ name: 'decal_Power' }} />
+            <mesh name="decal_Feel_the" castShadow receiveShadow geometry={nodes.decal_Feel_the.geometry} material={materials.decal_blue} position={[0.853, 0.722, 1.8]} rotation={[Math.PI / 2, 0, -Math.PI / 2]} scale={0.152} userData={{ name: 'decal_Feel_the' }} />
+            <mesh name="decal_LOGO" castShadow receiveShadow geometry={nodes.decal_LOGO.geometry} material={materials.decal_blue} position={[-1.167, 0.94, -0.989]} rotation={[0.003, 0.489, 0]} scale={0.392} userData={{ name: 'decal_LOGO' }} />
           </group>
         </group>
       </group>

@@ -15,7 +15,8 @@ export default function CameraManager({ triggerFade }) {
         demoMenu: "_DemoMenu_Camera_1",
         power: "_PowerButton_Camera_1",
         scale: "_Scale_Camera_1",
-        assembly: "_Assembly_Camera_1"
+        assembly: "_Assembly_Camera_1",
+        config: "_Config_Camera_1"
     }), [])
 
     useEffect(() => {

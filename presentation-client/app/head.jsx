@@ -55,6 +55,8 @@ export default function Head() {
         Be sure validate your Twitter card markup on the documentation site. */}
       <meta name='twitter:card' content='summary' />
       <meta name='twitter:site' content={twitter} />
+
+      {/* <link href="https://fonts.googleapis.com/css2?family=Bitcount:wght@100..900&display=swap" rel="stylesheet" /> */}
     </>
   )
 }
