@@ -301,30 +301,30 @@ export default function Model({ powerOn, setPowerOn }) {
   //////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////
 
+  // 2026-04-01 10:10
+  function updatePowerButtonGlow(t, materials) {
+    materials.powerButton.emissiveIntensity = 1 + Math.sin(t * 2) * 0.35
+  }
+
+  function updateSystemLights(intensity, materials) {
+    const i = intensity.get()
+    materials.mainBodyGrooveLights.emissiveIntensity = i
+    materials.liveDataLight.emissiveIntensity = i
+  }
+
   useFrame((state) => {
     const t = state.clock.getElapsedTime()
 
     // Demo texts
     updateDemoTexts({
-      t,
-      demoTextsRef,
-      buttonRefs,
-      baseYRef,
-      phaseRef,
-      hoveredIndex,
-      powerOn,
-      currentCamera
+      t, demoTextsRef, buttonRefs, baseYRef, phaseRef,
+      hoveredIndex, powerOn, currentCamera
     })
 
-    // Slow breathing glow
-    materials.powerButton.emissiveIntensity = 1 + Math.sin(t * 2) * 0.35
+    updatePowerButtonGlow(t, materials)
 
-    // Apply spring to system lights
-    const i = intensity.get()
-    materials.mainBodyGrooveLights.emissiveIntensity = i
-    materials.liveDataLight.emissiveIntensity = i
+    updateSystemLights(intensity, materials)
 
-    // Menu stripe
     menuStripeActivate(t)
   })
 
