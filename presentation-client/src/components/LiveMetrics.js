@@ -21,6 +21,13 @@ export default function LiveMetrics({ nodes, materials, powerOn }) {
     const maxEmissive = 2
     const flashDuration = 300  // Optional: used if you want temporary vote flashes
 
+    const updateBar = (mesh, targetScale, color, consensus) => {
+        currentScale[color] += (targetScale - currentScale[color]) * lerpFactor
+        mesh.scale.y = currentScale[color] * maxHeight
+        let intensityFactor = consensus === color ? 1 : targetScale
+        mesh.material.emissive.copy(colorMap[color].clone().multiplyScalar(intensityFactor * maxEmissive))
+        mesh.material.needsUpdate = true
+    }
 
     // Reset bars immediately when power toggles off
     useEffect(() => {
@@ -48,22 +55,10 @@ export default function LiveMetrics({ nodes, materials, powerOn }) {
 
         const { percentages, consensusColor } = useVoteStore.getState()
 
-        Object.keys(barRefs).forEach((color) => {
+        Object.keys(barRefs).forEach(color => {
             const mesh = barRefs[color].current
             if (!mesh) return
-
-            // --- Height animation ---
-            const targetScale = (percentages[color] || 0) / 100
-            currentScale[color] += (targetScale - currentScale[color]) * lerpFactor
-            mesh.scale.y = currentScale[color] * maxHeight
-
-            // --- Emissive animation ---
-            let intensityFactor = targetScale
-            if (consensusColor === color) intensityFactor = 1
-
-            const finalColor = colorMap[color].clone().multiplyScalar(intensityFactor * maxEmissive)
-            mesh.material.emissive.copy(finalColor)
-            mesh.material.needsUpdate = true
+            updateBar(mesh, (percentages[color] || 0) / 100, color, consensusColor)
         })
     })
 
