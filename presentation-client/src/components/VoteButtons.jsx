@@ -4,96 +4,37 @@ import { useCallback, useRef } from 'react'
 import { useVoteStore } from '../stores/useVoteStore'
 import { useFrame } from '@react-three/fiber'
 import { usePresentationSocket } from '@/hooks/usePresentationSocket'
-import colorMap from './colorMap'
+import { useVoteAnimationController } from '@/hooks/useVoteAnimationController'
 import { useCameraStore } from '@/stores/useCameraStore'
+import colorMap from './colorMap'
 
 export default function VoteButtons({ nodes, materials, powerOn }) {
     const { castVote, resetVotes } = usePresentationSocket("room-123")
     const currentCamera = useCameraStore((state) => state.currentCamera)
     const setCamera = useCameraStore((state) => state.setCamera)
+    const { refs, pressed, flash, update, triggerFlash } = useVoteAnimationController(materials)
 
-    // refs for GLTF meshes
-    const refs = {
-        red: useRef(),
-        green: useRef(),
-        blue: useRef(),
-    }
-
-    // morph & flash state
-    const pressed = useRef({
-        red: false,
-        green: false,
-        blue: false,
-    })
-
-    const flash = useRef({
-        red: false,
-        green: false,
-        blue: false,
-    })
-
-    const lerpFactor = 0.136
     const flashDuration = 550
-
-    const animateMorph = (mesh, isPressed) => {
-        if (!mesh?.morphTargetInfluences) return
-        const index = mesh.morphTargetDictionary['Key 1']
-        if (index === undefined) return
-
-        mesh.morphTargetInfluences[index] +=
-            (isPressed ? 1 : 0 - mesh.morphTargetInfluences[index]) * lerpFactor
-    }
-
-    useFrame(() => {
-        Object.keys(refs).forEach((color) => {
-            const mesh = refs[color].current
-            if (!mesh) return
-
-            // Morph target animation
-            animateMorph(mesh, pressed.current[color])
-
-            // Emissive: base neutral, flash to bar color if pressed
-            const targetColor = flash.current[color] ? colorMap[color] : materials.buttonBorder.color
-            mesh.material.color.lerp(mesh.material.color.set(targetColor), 0.1)
-
-            // Emissive intensity
-            const targetIntensity = flash.current[color] ? 2 : 0.5
-            mesh.material.emissiveIntensity += (targetIntensity - mesh.material.emissiveIntensity) * 0.1
-            mesh.material.needsUpdate = true
-        })
-    })
-
-
 
     const handleClick = useCallback((color) => {
         if (!powerOn) return
 
-        // 1️⃣ Emit vote immediately
+        // Emit vote
         castVote(color)
-        console.log("Emitting vote:", color)
 
-        // 2️⃣ Reset all pressed/flash states
-        Object.keys(pressed.current).forEach(c => (pressed.current[c] = false))
-        Object.keys(flash.current).forEach(c => (flash.current[c] = false))
+        // Trigger animation via hook
+        triggerFlash(color, flashDuration)
 
-        // 3️⃣ Set pressed & flash for this color
-        pressed.current[color] = true
-        flash.current[color] = true
-
-        // 4️⃣ Schedule reset of pressed/flash
+        // Switch camera after animation
         setTimeout(() => {
-            pressed.current[color] = false
-            flash.current[color] = false
+            setCamera("metrics")
         }, flashDuration)
 
-        // 5️⃣ Schedule camera change **after flash duration**
-        setTimeout(() => {
-            setCamera("metrics") // adjust to your actual camera target
-            console.log("Camera switched to metrics after flash")
-        }, flashDuration)
+    }, [powerOn, castVote, flashDuration, triggerFlash, setCamera])
 
-        console.log("HERE")
-    }, [powerOn, flashDuration, setCamera])
+    useFrame(() => {
+        update()
+    })
 
     return (
         <group name="Module_UIButtons">

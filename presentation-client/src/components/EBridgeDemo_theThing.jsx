@@ -293,7 +293,7 @@ export default function Model({ powerOn, setPowerOn }) {
     }
   }, [currentCamera]);
 
-  //Text materials transparent
+  //Setup functions
   useEffect(() => {
     setupTextMaterials(demoTextsRef, powerOn)
   }, [])
