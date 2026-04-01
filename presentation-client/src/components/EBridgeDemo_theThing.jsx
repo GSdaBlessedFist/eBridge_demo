@@ -76,7 +76,17 @@ export default function Model({ powerOn, setPowerOn }) {
     }
   }, [currentCamera]);
 
-  function updateDemoTexts(t) {
+  // 2026-04-01 10:05
+  function updateDemoTexts({
+    t,
+    demoTextsRef,
+    buttonRefs,
+    baseYRef,
+    phaseRef,
+    hoveredIndex,
+    powerOn,
+    currentCamera
+  }) {
     const demoTexts = demoTextsRef.current?.children
     if (!demoTexts || demoTexts.length === 0) return
 
@@ -85,7 +95,7 @@ export default function Model({ powerOn, setPowerOn }) {
     demoTexts.forEach((text, i) => {
       if (!text.material) return
 
-      // --- Fade ---
+      // Fade
       text.material.transparent = true
       text.material.opacity = THREE.MathUtils.lerp(
         text.material.opacity ?? 0,
@@ -93,22 +103,23 @@ export default function Model({ powerOn, setPowerOn }) {
         0.2
       )
 
-      // --- Vertical oscillation ---
+      // Vertical oscillation
       if (baseYRef.current[i] !== undefined) {
         text.position.y =
           baseYRef.current[i] +
           Math.sin(t * 2 + phaseRef.current[i]) * 0.025
       }
 
-      // --- Hover glow ---
+      // Hover glow
       if (!text.material.emissive) text.material.emissive = new THREE.Color(0xffffff)
       if (text.material.emissiveIntensity === undefined) text.material.emissiveIntensity = 1
+
       const glowTarget = hoveredIndex === i ? 17 : 1
       text.material.emissiveIntensity =
         THREE.MathUtils.lerp(text.material.emissiveIntensity, glowTarget, 0.1)
     })
 
-    // --- DemoTextButtons hover glow ---
+    // Button glow
     buttonRefs.forEach((ref, i) => {
       if (!ref.current) return
       const glowTarget = hoveredIndex === i ? 17 : 1
@@ -294,7 +305,16 @@ export default function Model({ powerOn, setPowerOn }) {
     const t = state.clock.getElapsedTime()
 
     // Demo texts
-    updateDemoTexts(t)
+    updateDemoTexts({
+      t,
+      demoTextsRef,
+      buttonRefs,
+      baseYRef,
+      phaseRef,
+      hoveredIndex,
+      powerOn,
+      currentCamera
+    })
 
     // Slow breathing glow
     materials.powerButton.emissiveIntensity = 1 + Math.sin(t * 2) * 0.35
