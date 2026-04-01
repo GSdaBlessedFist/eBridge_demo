@@ -25,12 +25,13 @@ export default function VoteButtons({ nodes, materials, powerOn }) {
         // Trigger animation via hook
         triggerFlash(color, flashDuration)
 
+        update(true)
         // Switch camera after animation
         setTimeout(() => {
             setCamera("metrics")
         }, flashDuration)
 
-    }, [powerOn, castVote, flashDuration, triggerFlash, setCamera])
+    }, [powerOn, castVote, flashDuration, update, triggerFlash, setCamera])
 
     useFrame(() => {
         update()
