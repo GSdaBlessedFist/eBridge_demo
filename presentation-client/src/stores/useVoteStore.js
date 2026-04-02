@@ -5,6 +5,7 @@ export const useVoteStore = create((set) => ({
     percentages: {},
     totalVoters: 0,
     consensusColor: null,
+    userVotes: {},
 
     setVoteState: ({ votes, percentages, totalVoters }) =>
         set({

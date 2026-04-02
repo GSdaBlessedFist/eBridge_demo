@@ -16,14 +16,17 @@ export const usePresentationSocket = (roomId) => {
         socketRef.current.emit("joinPresentation", roomId)
 
         socketRef.current.on("voteUpdate", (payload) => {
+            console.log("[Socket] voteUpdate received:", payload)
             setVoteState(payload)
         })
 
         socketRef.current.on("consensusReached", (color) => {
+            console.log("[Socket] consensusReached:", color)
             setConsensus(color)
         })
 
         socketRef.current.on("consensusReset", () => {
+            console.log("[Socket] consensusReset")
             resetConsensus()
         })
 
@@ -57,7 +60,11 @@ export const usePresentationSocket = (roomId) => {
     // Function to emit votes
     // -----------------------------
     const castVote = (color) => {
-        if (!socketRef.current) return
+        if (!socketRef.current) {
+            console.warn("[Socket] No socket available to cast vote")
+            return
+        }
+        console.log(`[Socket] Emitting vote: color=${color}, roomId=${roomId}`)
         socketRef.current.emit("castVote", { roomId, color })
     }
 

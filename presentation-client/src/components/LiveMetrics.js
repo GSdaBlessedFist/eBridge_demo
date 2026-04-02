@@ -6,27 +6,22 @@ import { useVoteStore } from '../stores/useVoteStore'
 import colorMap from './colorMap'
 import { useCameraStore } from '@/stores/useCameraStore'
 
+// export default function LiveMetrics({ nodes, materials, powerOn }) {
+
 export default function LiveMetrics({ nodes, materials, powerOn }) {
     const currentCamera = useCameraStore((state) => state.currentCamera)
+
     const barRefs = {
         red: useRef(),
         green: useRef(),
         blue: useRef(),
     }
 
-    const currentScale = useRef({ red: 0, green: 0, blue: 0 }).current
-    const lerpFactor = 0.1
+    // Store current displayed height for smooth lerp
+    const displayHeight = useRef({ red: 0, green: 0, blue: 0 }).current
+    const lerpFactor = 0.08
     const maxHeight = 1
     const maxEmissive = 2
-    const flashDuration = 300  // Optional: used if you want temporary vote flashes
-
-    const updateBar = (mesh, targetScale, color, consensus) => {
-        currentScale[color] += (targetScale - currentScale[color]) * lerpFactor
-        mesh.scale.y = currentScale[color] * maxHeight
-        let intensityFactor = consensus === color ? 1 : targetScale
-        mesh.material.emissive.copy(colorMap[color].clone().multiplyScalar(intensityFactor * maxEmissive))
-        mesh.material.needsUpdate = true
-    }
 
     // Reset bars immediately when power toggles off
     useEffect(() => {
@@ -36,28 +31,41 @@ export default function LiveMetrics({ nodes, materials, powerOn }) {
                 if (!mesh) return
                 mesh.scale.y = 0
                 mesh.material.emissiveIntensity = 0
-                currentScale[color] = 0
+                displayHeight[color] = 0
             })
         }
     }, [powerOn])
 
+    // Fade bars in/out based on camera
     useEffect(() => {
-        if (currentCamera == "metrics") {
-            Object.values(barRefs).forEach(b => b.current.material.opacity = 1)
-        } else {
-            Object.values(barRefs).forEach(b => b.current.material.opacity = 0)
-        }
+        const visible = currentCamera === "metrics" ? 1 : 0
+        Object.values(barRefs).forEach(b => {
+            if (!b.current) return
+            b.current.material.opacity = visible
+        })
     }, [currentCamera])
 
-    useFrame(() => {
-        if (!powerOn) return  // Block flares / updates if system is off
 
+
+
+    // Animate bars frame-by-frame
+    useFrame(() => {
+        if (!powerOn) return
         const { percentages, consensusColor } = useVoteStore.getState()
 
         Object.keys(barRefs).forEach(color => {
             const mesh = barRefs[color].current
             if (!mesh) return
-            updateBar(mesh, (percentages[color] || 0) / 100, color, consensusColor)
+
+            const target = (percentages[color] || 0) / 100
+            // Smooth lerp
+            displayHeight[color] += (target - displayHeight[color]) * lerpFactor
+            mesh.scale.y = displayHeight[color] * maxHeight
+
+            // Emissive intensity
+            const intensityFactor = consensusColor === color ? 1 : displayHeight[color]
+            mesh.material.emissive.copy(colorMap[color].clone().multiplyScalar(intensityFactor * maxEmissive))
+            mesh.material.needsUpdate = true
         })
     })
 

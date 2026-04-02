@@ -7,6 +7,7 @@ import { usePresentationSocket } from '@/hooks/usePresentationSocket'
 import { useVoteAnimationController } from '@/hooks/useVoteAnimationController'
 import { useCameraStore } from '@/stores/useCameraStore'
 import colorMap from './colorMap'
+import { emit } from '@/stores/events/eventBus'
 
 export default function VoteButtons({ nodes, materials, powerOn }) {
     const { castVote, resetVotes } = usePresentationSocket("room-123")
@@ -20,8 +21,12 @@ export default function VoteButtons({ nodes, materials, powerOn }) {
         if (!powerOn) return
 
         // Emit vote
+        emit({
+            type: "VOTE_CAST",
+            payload: { color }
+        })
         castVote(color)
-
+        //console.log("[VoteButtons] event emitted:", color)  // <-- ADD THIS
         // Trigger animation via hook
         triggerFlash(color, flashDuration)
 

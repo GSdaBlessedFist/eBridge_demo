@@ -17,6 +17,7 @@ import PowerUI from './PowerUI'
 import { useVoteStore } from '@/stores/useVoteStore'
 import ConfigUI from './ConfigUI'
 import colorMap from './colorMap'
+import { useVoteEventBridge } from '@/hooks/useVoteEventBridge'
 
 export default function Model({ powerOn, setPowerOn }) {
   // const { resetVotes } = usePresentationSocket("room-123")
@@ -38,6 +39,7 @@ export default function Model({ powerOn, setPowerOn }) {
   const [assemblyActionProgress, setAssemblyActionProgress] = useState(0);
 
   const percentages = useVoteStore((state) => state.percentages)
+  useVoteEventBridge()
   //CONFIG section
   const topHiddenScreenRef = useRef()
   const topHiddenDisplayRef = useRef();
@@ -312,8 +314,8 @@ export default function Model({ powerOn, setPowerOn }) {
     const children = demoTextsRef.current.children
     baseYRef.current = children.map(c => c.position.y)
     phaseRef.current = children.map((_, i) => i * PHASE)
-    console.log("Stored baseY:", baseYRef.current)
-    console.log("Stored phases:", phaseRef.current)
+    // console.log("Stored baseY:", baseYRef.current)
+    // console.log("Stored phases:", phaseRef.current)
   }, [])
 
 
