@@ -9,6 +9,7 @@ export const usePresentationSocket = (roomId) => {
     const setVoteState = useVoteStore((state) => state.setVoteState)
     const setConsensus = useVoteStore((state) => state.setConsensus)
     const resetConsensus = useVoteStore((state) => state.resetConsensus)
+    const setConfig = useVoteStore((state) => state.setConfig)
 
     useEffect(() => {
         socketRef.current = io("http://localhost:3001")
@@ -28,6 +29,11 @@ export const usePresentationSocket = (roomId) => {
         socketRef.current.on("consensusReset", () => {
             console.log("[Socket] consensusReset")
             resetConsensus()
+        })
+
+        socketRef.current.on("configUpdated", (config) => {
+            console.log("[Socket] configUpdated:", config)
+            setConfig(config)
         })
 
         // 2026-03-02 00:45

@@ -39,6 +39,22 @@ io.on('connection', (socket) => {
         }
     })
 
+    //Configuration Change
+    socket.on('configChange', ({ roomId, voteMode, gameMode }) => {
+        const room = getRoom(roomId)
+        if (!room) return
+
+        if (voteMode) room.voteMode = voteMode
+        if (gameMode) room.gameMode = gameMode
+
+        console.log(`[Config Updated]`, room.voteMode, room.gameMode)
+
+        io.to(roomId).emit('configUpdated', {
+            voteMode: room.voteMode,
+            gameMode: room.gameMode
+        })
+    })
+
     // Handle vote cast
     socket.on('castVote', ({ roomId, color }) => {
         // Rate limiting

@@ -18,6 +18,8 @@ import { useVoteStore } from '@/stores/useVoteStore'
 import ConfigUI from './ConfigUI'
 import colorMap from './colorMap'
 import { useVoteEventBridge } from '@/hooks/useVoteEventBridge'
+import { useConfigStore } from '@/stores/useConfigStore'
+import { emit } from '@/stores/events/eventBus'
 
 export default function Model({ powerOn, setPowerOn }) {
   // const { resetVotes } = usePresentationSocket("room-123")
@@ -29,6 +31,12 @@ export default function Model({ powerOn, setPowerOn }) {
 
   const demoTextsRef = useRef(); // name="DemoTexts"
   const buttonRefs = [useRef(), useRef(), useRef(), useRef()]
+  const configurationModeButtonRef = useRef();
+  const ledRefs = {
+    STRICT: useRef(),
+    PERSISTENT: useRef(),
+    ACTIVE: useRef()
+  }
   const baseYRef = useRef([])
   const phaseRef = useRef([])
   const [hoveredIndex, setHoveredIndex] = useState(null)
@@ -40,11 +48,14 @@ export default function Model({ powerOn, setPowerOn }) {
 
   const percentages = useVoteStore((state) => state.percentages)
   useVoteEventBridge()
+
   //CONFIG section
   const topHiddenScreenRef = useRef()
   const topHiddenDisplayRef = useRef();
   const [configHtmlPos, setConfigHtmlPos] = useState([0, 0, 0]);
   const [configSlideCompleted, setConfigSlideCompleted] = useState(false);
+  const currentMode = useConfigStore(state => state.currentConfigMode)
+  const setConfigMode = useConfigStore(state => state.setConfigMode)
 
 
   //Extras
@@ -168,6 +179,26 @@ export default function Model({ powerOn, setPowerOn }) {
     action.paused = false
     action.play()
   }
+  //Configuration functions
+  function handleModeCycle() {
+    emit({ type: 'CONFIG_MODE_CYCLE' })
+  }
+  function handleGameMode() {
+    emit({ type: "CONFIG_GAME_MODE" })
+  }
+
+  function updateConfigLEDs() {
+    const { currentConfigMode } = useConfigStore.getState()
+
+    Object.keys(ledRefs).forEach((mode) => {
+      const mesh = ledRefs[mode].current
+      if (!mesh) return
+
+      mesh.material.emissiveIntensity =
+        currentConfigMode === mode ? 3 : 0
+    })
+  }
+
   //Setup functions
   // 2026-04-01 10:20
   function setupTextMaterials(demoTextsRef, powerOn) {
@@ -209,6 +240,17 @@ export default function Model({ powerOn, setPowerOn }) {
       powerButtonMat.map.magFilter = THREE.LinearFilter
       powerButtonMat.map.needsUpdate = true
     }
+  }
+
+  function setupLEDMaterials(ledRefs) {
+    Object.keys(ledRefs).forEach((mode) => {
+      const mesh = ledRefs[mode].current
+      if (mesh) {
+        // clone the material so each LED has its own
+        mesh.material = mesh.material.clone()
+        mesh.material.emissiveIntensity = 0 // start off
+      }
+    })
   }
 
   ////////////////////////////////////////////////////////////
@@ -308,6 +350,10 @@ export default function Model({ powerOn, setPowerOn }) {
     setupAnisotropy(materials, gl)
   }, [materials, gl])
 
+  useEffect(() => {
+    setupLEDMaterials(ledRefs)
+  }, [ledRefs]);
+
   useLayoutEffect(() => {
     if (!demoTextsRef.current) return
     const PHASE = -0.6
@@ -318,7 +364,14 @@ export default function Model({ powerOn, setPowerOn }) {
     // console.log("Stored phases:", phaseRef.current)
   }, [])
 
+  //SUBSCRIPTIONS
+  useEffect(() => {
+    // Subscribe to store updates
+    const unsubscribe = useConfigStore.subscribe(() => updateConfigLEDs())
 
+    // Cleanup subscription on unmount
+    return () => unsubscribe()
+  }, [])
   //////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////
 
@@ -339,6 +392,7 @@ export default function Model({ powerOn, setPowerOn }) {
     updateSystemLights(intensity, materials)
 
     menuStripeActivate(t)
+    updateConfigLEDs()
   })
 
 
@@ -418,9 +472,21 @@ export default function Model({ powerOn, setPowerOn }) {
                 <mesh name="mainScreenIOLights" castShadow receiveShadow geometry={nodes.mainScreenIOLights.geometry} material={materials.mainScreenIOLights} position={[-0.215, 0.957, -0.133]} rotation={[-Math.PI, 0, 0]} scale={[-0.033, -1, -0.127]} userData={{ name: 'mainScreenIOLights' }} />
               </group>
               <mesh name="returnToMenu_liveMetrics" castShadow receiveShadow geometry={nodes.returnToMenu_liveMetrics.geometry} material={materials.returnToMenuLights} userData={{ name: 'returnToMenu_liveMetrics' }} onClick={() => setCamera("demoMenu")} />
-              <group name="modeSelectorButton" position={[1.251, 0.935, -1.591]} scale={0.066} userData={{ name: 'modeSelectorButton' }}>
-                <mesh name="modeSelectorButton_1" castShadow receiveShadow geometry={nodes.modeSelectorButton_1.geometry} material={materials.buttonBlack} />
+              <group name="modeSelectorButton" userData={{ name: 'modeSelectorButton' }}>
+                <mesh name="modeSelectorButton_1" castShadow receiveShadow geometry={nodes.modeSelectorButton_1.geometry} material={materials.buttonBlack} onClick={(e) => { e.stopPropagation(); handleGameMode() }} />
                 <mesh name="modeSelectorButton_2" castShadow receiveShadow geometry={nodes.modeSelectorButton_2.geometry} material={materials.mainBodyGrooveLights} />
+              </group>
+              <group name="configurationModeButton" position={[-0.736, 0, 0.208]} userData={{ name: 'configurationModeButton' }}>
+                <mesh ref={configurationModeButtonRef} name="configurationModeButton_1" castShadow receiveShadow geometry={nodes.configurationModeButton_1.geometry} material={materials.buttonBlack} onClick={(e) => { e.stopPropagation(); handleModeCycle() }} />
+                <mesh name="configurationModeButton_2" castShadow receiveShadow geometry={nodes.configurationModeButton_2.geometry} material={materials.decal_blue} />
+                <mesh name="configurationDecal_ActiveOnly" castShadow receiveShadow geometry={nodes.configurationDecal_ActiveOnly.geometry} material={nodes.configurationDecal_ActiveOnly.material} position={[1.394, 0.965, -1.888]} userData={{ name: 'configurationDecal_ActiveOnly' }} />
+                <mesh name="configurationDecal_Persistent" castShadow receiveShadow geometry={nodes.configurationDecal_Persistent.geometry} material={nodes.configurationDecal_Persistent.material} position={[1.251, 0.965, -1.888]} userData={{ name: 'configurationDecal_Persistent' }} />
+                <mesh name="configurationDecal_Strict" castShadow receiveShadow geometry={nodes.configurationDecal_Strict.geometry} material={nodes.configurationDecal_Strict.material} position={[1.109, 0.965, -1.886]} userData={{ name: 'configurationDecal_Strict' }} />
+                <mesh name="configurationModeSelectorBase" castShadow receiveShadow geometry={nodes.configurationModeSelectorBase.geometry} material={materials.mainBody} position={[0.736, 0, -0.208]} userData={{ name: 'configurationModeSelectorBase' }}>
+                  <mesh ref={ledRefs.ACTIVE} name="configurationModeLED_ACTIVE" castShadow receiveShadow geometry={nodes.configurationModeLED_ACTIVE.geometry} material={materials.configurationModeLED} userData={{ name: 'configurationModeLED_ACTIVE' }} />
+                  <mesh ref={ledRefs.PERSISTENT} name="configurationModeLED_PERSISTENT" castShadow receiveShadow geometry={nodes.configurationModeLED_PERSISTENT.geometry} material={materials.configurationModeLED} userData={{ name: 'configurationModeLED_PERSISTENT' }} />
+                  <mesh ref={ledRefs.STRICT} name="configurationModeLED_STRICT" castShadow receiveShadow geometry={nodes.configurationModeLED_STRICT.geometry} material={materials.configurationModeLED} userData={{ name: 'configurationModeLED_STRICT' }} />
+                </mesh>
               </group>
             </group>
             <group name="Top_HiddenPanel" userData={{ name: 'Top_HiddenPanel' }}>
@@ -621,7 +687,7 @@ export default function Model({ powerOn, setPowerOn }) {
               </group>
             </group>
             <group name="Decals" userData={{ name: 'Decals' }}>
-              <mesh name="decal_10Mode" castShadow receiveShadow geometry={nodes.decal_10Mode.geometry} material={materials.decal_blue} position={[0.962, 0.935, -1.534]} scale={0.203} userData={{ name: 'decal_10Mode' }} />
+              <mesh name="decal_10Mode" castShadow receiveShadow geometry={nodes.decal_10Mode.geometry} material={materials.decal_blue} position={[0.962, 0.935, -1.534]} userData={{ name: 'decal_10Mode' }} />
               <mesh name="decal_menu" castShadow receiveShadow geometry={nodes.decal_menu.geometry} material={materials.decal_blue} position={[1.547, 0.839, -0.915]} rotation={[1.571, 0.797, -Math.PI / 2]} scale={0.128} userData={{ name: 'decal_menu' }} />
               <mesh name="decal_Power" castShadow receiveShadow geometry={nodes.decal_Power.geometry} material={materials.decal_blue} position={[0.881, 0.707, 1.22]} rotation={[Math.PI / 2, 0, 0]} scale={0.196} userData={{ name: 'decal_Power' }} />
               <mesh name="decal_Feel_the" castShadow receiveShadow geometry={nodes.decal_Feel_the.geometry} material={materials.decal_blue} position={[0.853, 0.722, 1.8]} rotation={[Math.PI / 2, 0, -Math.PI / 2]} scale={0.152} userData={{ name: 'decal_Feel_the' }} />

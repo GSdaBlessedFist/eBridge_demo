@@ -6,7 +6,10 @@ function createRoom(roomId) {
     if (!rooms.has(roomId)) {
         rooms.set(roomId, {
             votes: {},
-            voters: {}
+            voters: {},
+            voteMode: "strict",
+            gameMode: "standard",
+            winner: null
         })
     }
     return rooms.get(roomId)

@@ -22,5 +22,11 @@ export const useVoteStore = create((set) => ({
     resetConsensus: () =>
         set({
             consensusColor: null
-        })
+        }),
+
+    setConfig: ({ voteMode, gameMode }) =>
+        set((state) => ({
+            voteMode: voteMode ?? state.voteMode,
+            gameMode: gameMode ?? state.gameMode
+        }))
 }))

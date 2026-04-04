@@ -40,7 +40,7 @@ export default function Model(props) {
             <PerspectiveCamera name="_Overview_Camera_1" makeDefault={false} far={1000} near={0.1} fov={22.895} position={[1.45, 6.075, 8.08]} rotation={[-0.62, 0.164, 0.116]} userData={{ name: '_Overview_Camera' }} />
             <PerspectiveCamera name="_Assembly_Camera_1" makeDefault={false} far={1000} near={0.1} fov={39.761} position={[0, 9.925, 0]} rotation={[-Math.PI / 2, 0, 0]} userData={{ name: '_Assembly_Camera' }} />
             <PerspectiveCamera name="_Config_Camera_1" makeDefault={false} far={1000} near={0.1} fov={22.895} position={[0.052, 7.316, -2.42]} rotation={[-Math.PI / 2, 0, 0]} userData={{ name: '_Config_Camera' }} />
-            <PerspectiveCamera name="Camera_1" makeDefault={false} far={1000} near={0.1} fov={22.895} position={[-3.33, 6.573, 6.157]} rotation={[-0.854, -0.417, -0.435]} userData={{ name: 'Camera' }} />
+            <PerspectiveCamera name="Camera_1" makeDefault={false} far={1000} near={0.1} fov={22.895} position={[1.296, 2.594, -0.092]} rotation={[-0.804, 0.127, 0.13]} userData={{ name: 'Camera' }} />
           </group>
           <group name="THE_THING" userData={{ name: 'THE_THING' }}>
             <group name="Module_MainBody" userData={{ name: 'Module_MainBody' }}>
@@ -65,9 +65,21 @@ export default function Model(props) {
                 <mesh name="mainScreenIOLights" castShadow receiveShadow geometry={nodes.mainScreenIOLights.geometry} material={materials.mainScreenIOLights} position={[-0.215, 0.957, -0.133]} rotation={[-Math.PI, 0, 0]} scale={[-0.033, -1, -0.127]} userData={{ name: 'mainScreenIOLights' }} />
               </group>
               <mesh name="returnToMenu_liveMetrics" castShadow receiveShadow geometry={nodes.returnToMenu_liveMetrics.geometry} material={materials.returnToMenuLights} userData={{ name: 'returnToMenu_liveMetrics' }} />
-              <group name="modeSelectorButton" position={[1.251, 0.935, -1.591]} scale={0.066} userData={{ name: 'modeSelectorButton' }}>
+              <group name="modeSelectorButton" userData={{ name: 'modeSelectorButton' }}>
                 <mesh name="modeSelectorButton_1" castShadow receiveShadow geometry={nodes.modeSelectorButton_1.geometry} material={materials.buttonBlack} />
                 <mesh name="modeSelectorButton_2" castShadow receiveShadow geometry={nodes.modeSelectorButton_2.geometry} material={materials.mainBodyGrooveLights} />
+              </group>
+              <group name="configurationModeButton" position={[-0.736, 0, 0.208]} userData={{ name: 'configurationModeButton' }}>
+                <mesh name="configurationModeButton_1" castShadow receiveShadow geometry={nodes.configurationModeButton_1.geometry} material={materials.buttonBlack} />
+                <mesh name="configurationModeButton_2" castShadow receiveShadow geometry={nodes.configurationModeButton_2.geometry} material={materials.decal_blue} />
+                <mesh name="configurationDecal_ActiveOnly" castShadow receiveShadow geometry={nodes.configurationDecal_ActiveOnly.geometry} material={nodes.configurationDecal_ActiveOnly.material} position={[1.394, 0.961, -1.888]} userData={{ name: 'configurationDecal_ActiveOnly' }} />
+                <mesh name="configurationDecal_Persistent" castShadow receiveShadow geometry={nodes.configurationDecal_Persistent.geometry} material={nodes.configurationDecal_Persistent.material} position={[1.251, 0.961, -1.888]} userData={{ name: 'configurationDecal_Persistent' }} />
+                <mesh name="configurationDecal_Strict" castShadow receiveShadow geometry={nodes.configurationDecal_Strict.geometry} material={nodes.configurationDecal_Strict.material} position={[1.109, 0.961, -1.886]} userData={{ name: 'configurationDecal_Strict' }} />
+                <mesh name="configurationModeSelectorBase" castShadow receiveShadow geometry={nodes.configurationModeSelectorBase.geometry} material={materials.mainBody} position={[0.736, 0, -0.208]} userData={{ name: 'configurationModeSelectorBase' }}>
+                  <mesh name="configurationModeLED_ACTIVE" castShadow receiveShadow geometry={nodes.configurationModeLED_ACTIVE.geometry} material={materials.configurationModeLED} userData={{ name: 'configurationModeLED_ACTIVE' }} />
+                  <mesh name="configurationModeLED_PERSISTENT" castShadow receiveShadow geometry={nodes.configurationModeLED_PERSISTENT.geometry} material={materials.configurationModeLED} userData={{ name: 'configurationModeLED_PERSISTENT' }} />
+                  <mesh name="configurationModeLED_STRICT" castShadow receiveShadow geometry={nodes.configurationModeLED_STRICT.geometry} material={materials.configurationModeLED} userData={{ name: 'configurationModeLED_STRICT' }} />
+                </mesh>
               </group>
             </group>
             <group name="Top_HiddenPanel" userData={{ name: 'Top_HiddenPanel' }}>
@@ -138,7 +150,7 @@ export default function Model(props) {
             <mesh name="liveMetrics_bg_panel" castShadow receiveShadow geometry={nodes.liveMetrics_bg_panel.geometry} material={materials.liveMetrics_bg_panel} userData={{ name: 'liveMetrics_bg_panel' }} />
           </group>
           <group name="Decals" userData={{ name: 'Decals' }}>
-            <mesh name="decal_10Mode" castShadow receiveShadow geometry={nodes.decal_10Mode.geometry} material={materials.decal_blue} position={[0.962, 0.935, -1.534]} scale={0.203} userData={{ name: 'decal_10Mode' }} />
+            <mesh name="decal_10Mode" castShadow receiveShadow geometry={nodes.decal_10Mode.geometry} material={materials.decal_blue} position={[0.962, 0.935, -1.534]} userData={{ name: 'decal_10Mode' }} />
             <mesh name="decal_menu" castShadow receiveShadow geometry={nodes.decal_menu.geometry} material={materials.decal_blue} position={[1.547, 0.839, -0.915]} rotation={[1.571, 0.797, -Math.PI / 2]} scale={0.128} userData={{ name: 'decal_menu' }} />
             <mesh name="decal_Power" castShadow receiveShadow geometry={nodes.decal_Power.geometry} material={materials.decal_blue} position={[0.881, 0.707, 1.22]} rotation={[Math.PI / 2, 0, 0]} scale={0.196} userData={{ name: 'decal_Power' }} />
             <mesh name="decal_Feel_the" castShadow receiveShadow geometry={nodes.decal_Feel_the.geometry} material={materials.decal_blue} position={[0.853, 0.722, 1.8]} rotation={[Math.PI / 2, 0, -Math.PI / 2]} scale={0.152} userData={{ name: 'decal_Feel_the' }} />

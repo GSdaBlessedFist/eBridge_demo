@@ -5,6 +5,7 @@ import { useFrame } from '@react-three/fiber'
 import { useVoteStore } from '../stores/useVoteStore'
 import colorMap from './colorMap'
 import { useCameraStore } from '@/stores/useCameraStore'
+import * as THREE from "three"
 
 // export default function LiveMetrics({ nodes, materials, powerOn }) {
 
@@ -45,10 +46,11 @@ export default function LiveMetrics({ nodes, materials, powerOn }) {
         })
     }, [currentCamera])
 
-
-
+    // useEffect(() => { console.log("barRefs.blue.current.material.emissiveIntensity: ", barRefs.blue.current.material.emissiveIntensity) }, [])
+    // useEffect(() => { console.log("barRefs.blue.current.material.emissiveIntensity(after): ", barRefs.blue.current.material.emissiveIntensity) }, [barRefs])
 
     // Animate bars frame-by-frame
+    const neutralColor = new THREE.Color(0.2, 0.2, 0.2) // soft grey
     useFrame(() => {
         if (!powerOn) return
         const { percentages, consensusColor } = useVoteStore.getState()
@@ -63,8 +65,27 @@ export default function LiveMetrics({ nodes, materials, powerOn }) {
             mesh.scale.y = displayHeight[color] * maxHeight
 
             // Emissive intensity
-            const intensityFactor = consensusColor === color ? 1 : displayHeight[color]
-            mesh.material.emissive.copy(colorMap[color].clone().multiplyScalar(intensityFactor * maxEmissive))
+            // const intensityFactor = consensusColor === color ? 5 : displayHeight[color]
+            // mesh.material.emissive.copy(colorMap[color])
+
+            // mesh.material.emissiveIntensity =
+            //     consensusColor === color
+            //         ? 5   // 🔥 obvious boost
+            //         : displayHeight[color] * maxEmissive
+
+            const t = displayHeight[color] // already 0 → 1
+
+            const blended = neutralColor.clone().lerp(colorMap[color], t)
+
+            mesh.material.color.copy(blended)
+            mesh.material.emissive.copy(blended)
+            mesh.material.emissiveIntensity = 2
+
+            mesh.material.emissiveIntensity =
+                consensusColor === color
+                    ? 1.25  // 🔥 highlight winner
+                    : .25
+
             mesh.material.needsUpdate = true
         })
     })
