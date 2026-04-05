@@ -4,6 +4,8 @@ import { createPortal } from 'react-dom'
 
 export default function CameraFadePortal({ duration = 750, onReady }) {
     const [visible, setVisible] = useState(false)
+    const [mounted, setMounted] = useState(false);
+
 
     const triggerFade = (midpointAction) => {
         setVisible(true)
@@ -22,6 +24,9 @@ export default function CameraFadePortal({ duration = 750, onReady }) {
         if (onReady) onReady(triggerFade)
     }, [])
 
+    useEffect(() => setMounted(true), []);
+
+    if (!mounted) return null;
     return createPortal(
         <div
             style={{
