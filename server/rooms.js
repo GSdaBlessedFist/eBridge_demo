@@ -7,8 +7,10 @@ function createRoom(roomId) {
         rooms.set(roomId, {
             votes: {},
             voters: {},
-            voteMode: "strict",
-            gameMode: "standard",
+            config: {
+                vote: "STRICT",
+                isGameMode: false
+            },
             winner: null
         })
     }

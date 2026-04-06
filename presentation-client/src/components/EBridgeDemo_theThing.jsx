@@ -37,6 +37,8 @@ export default function Model({ powerOn, setPowerOn }) {
     PERSISTENT: useRef(),
     ACTIVE: useRef()
   }
+  const gameModeButtonRef = useRef();
+
   const baseYRef = useRef([])
   const phaseRef = useRef([])
   const [hoveredIndex, setHoveredIndex] = useState(null)
@@ -47,7 +49,7 @@ export default function Model({ powerOn, setPowerOn }) {
   const [assemblyActionProgress, setAssemblyActionProgress] = useState(0);
 
   const percentages = useVoteStore((state) => state.percentages)
-  useVoteEventBridge()
+  //useVoteEventBridge()
 
   //CONFIG section
   const topHiddenScreenRef = useRef()
@@ -197,6 +199,14 @@ export default function Model({ powerOn, setPowerOn }) {
       mesh.material.emissiveIntensity =
         currentConfigMode === mode ? 3 : 0
     })
+  }
+
+  function updateGameModeLED() {
+    const { isGameMode } = useConfigStore.getState()
+    if (!gameModeButtonRef.current) return;
+    gameModeButtonRef.current.material.emissiveIntensity =
+      isGameMode ? 3 : 0
+
   }
 
   //Setup functions
@@ -393,6 +403,7 @@ export default function Model({ powerOn, setPowerOn }) {
 
     menuStripeActivate(t)
     updateConfigLEDs()
+    updateGameModeLED()
   })
 
 
@@ -474,7 +485,9 @@ export default function Model({ powerOn, setPowerOn }) {
               <mesh name="returnToMenu_liveMetrics" castShadow receiveShadow geometry={nodes.returnToMenu_liveMetrics.geometry} material={materials.returnToMenuLights} userData={{ name: 'returnToMenu_liveMetrics' }} onClick={() => setCamera("demoMenu")} />
               <group name="modeSelectorButton" userData={{ name: 'modeSelectorButton' }}>
                 <mesh name="modeSelectorButton_1" castShadow receiveShadow geometry={nodes.modeSelectorButton_1.geometry} material={materials.buttonBlack} onClick={(e) => { e.stopPropagation(); handleGameMode() }} />
-                <mesh name="modeSelectorButton_2" castShadow receiveShadow geometry={nodes.modeSelectorButton_2.geometry} material={materials.mainBodyGrooveLights} />
+                <mesh ref={gameModeButtonRef} name="modeSelectorButton_2" castShadow receiveShadow geometry={nodes.modeSelectorButton_2.geometry} >
+                  <meshStandardMaterial emissive="white" emissiveIntensity={0} />
+                </mesh>
               </group>
               <group name="configurationModeButton" position={[-0.736, 0, 0.208]} userData={{ name: 'configurationModeButton' }}>
                 <mesh ref={configurationModeButtonRef} name="configurationModeButton_1" castShadow receiveShadow geometry={nodes.configurationModeButton_1.geometry} material={materials.buttonBlack} onClick={(e) => { e.stopPropagation(); handleModeCycle() }} />
