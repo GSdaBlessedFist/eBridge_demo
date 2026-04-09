@@ -33,7 +33,9 @@ export function useVoteAnimationController(materials) {
             (isPressed ? 1 : 0 - mesh.morphTargetInfluences[index]) * lerpFactor
     }
 
+    const baseColor = new THREE.Color().copy(materials.buttonBorder.color)
     function update() {
+        //console.log("[Animation] update running")  // <-- ADD THIS
         Object.keys(refs).forEach((color) => {
             const mesh = refs[color].current
             if (!mesh) return
@@ -42,19 +44,22 @@ export function useVoteAnimationController(materials) {
 
             const targetColor = flash.current[color]
                 ? colorMap[color]
-                : materials.buttonBorder.color
+                : baseColor
 
-            mesh.material.color.lerp(mesh.material.color.set(targetColor), 0.1)
+            const temp = new THREE.Color().copy(targetColor)
+            mesh.material.color.lerp(temp, 0.1)
 
             const targetIntensity = flash.current[color] ? 2 : 0.5
             mesh.material.emissiveIntensity +=
                 (targetIntensity - mesh.material.emissiveIntensity) * 0.1
 
             mesh.material.needsUpdate = true
+            //console.log("[Animation] flash state:", color, flash.current[color])
         })
     }
 
     function triggerFlash(color, duration = 550) {
+        console.log("[Animation] triggerFlash called for", color)  // <-- ADD THIS
         // reset everything
         Object.keys(pressed.current).forEach(c => (pressed.current[c] = false))
         Object.keys(flash.current).forEach(c => (flash.current[c] = false))
@@ -78,3 +83,4 @@ export function useVoteAnimationController(materials) {
         triggerFlash
     }
 }
+

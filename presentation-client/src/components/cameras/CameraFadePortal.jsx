@@ -20,7 +20,7 @@ export default function CameraFadePortal({ duration = 750, onReady }) {
     }
 
     useEffect(() => {
-        console.log("Fade portal registering trigger")
+        //console.log("Fade portal registering trigger")
         if (onReady) onReady(triggerFade)
     }, [])
 
@@ -36,7 +36,7 @@ export default function CameraFadePortal({ duration = 750, onReady }) {
                 opacity: visible ? 1 : 0,
                 transition: `opacity ${duration / 2}ms ease`,
                 pointerEvents: 'none',
-                zIndex: 9999,
+                zIndex: 900,
             }}
         />,
         document.body

@@ -24,7 +24,7 @@ on((event) => {
             const currentIndex = modes.indexOf(state.currentConfigMode)
             const safeIndex = currentIndex === -1 ? 0 : currentIndex
             const nextIndex = (safeIndex + 1) % modes.length
-            //console.log(state.currentConfigMode)
+            console.log("currentConfigMode:", modes[nextIndex])
             return {
                 currentConfigMode: modes[nextIndex]
             }
@@ -35,7 +35,7 @@ on((event) => {
 on((event) => {
     if (event.type === "CONFIG_GAME_MODE") {
         useConfigStore.setState((state) => {
-            console.log(state.isGameMode)
+            console.log('GameMode toggled:', !state.isGameMode)
 
             return {
                 isGameMode: !state.isGameMode

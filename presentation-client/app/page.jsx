@@ -4,10 +4,13 @@ import CameraManager from "@/components/cameras/CameraManager";
 import CloudGroup from "@/components/CloudGroup";
 import ConfigUI from "@/components/ConfigUI";
 import Model from "@/components/EBridgeDemo_theThing";
+import InfoPortal from "@/components/InfoPortal";
 import PostProcessing from "@/components/PostProcessing";
 import PowerUI from "@/components/PowerUI";
 import { usePresentationSocket } from "@/hooks/usePresentationSocket";
+import { emit } from "@/stores/events/eventBus";
 import { useCameraStore } from "@/stores/useCameraStore";
+import { useConfigStore } from "@/stores/useConfigStore";
 import { Environment, Html, OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { Leva } from "leva";
@@ -17,11 +20,14 @@ import React from "react";
 const Page = () => {
   usePresentationSocket("room-123")
   const [triggerFade, setTriggerFade] = useState(null)
+  const [showInfoPortal, setShowInfoPortal] = useState(false)
   const [powerOn, setPowerOn] = useState(false)
   const setCamera = useCameraStore((state) => state.setCamera)
+  const { currentConfigMode, isGameMode } = useConfigStore.getState()
 
   return (<>
     <div className="h-screen w-full relative">
+
       <Canvas className="h-full w-full" gl={{ antialias: true }}>
         <Suspense fallback={<Html>Loading...</Html>}>
           <CameraManager triggerFade={triggerFade} />
@@ -30,7 +36,8 @@ const Page = () => {
           <ambientLight intensity={0.5} />
           <directionalLight position={[0, 0, 5]} intensity={1} />
           <Model powerOn={powerOn}
-            setPowerOn={setPowerOn} />
+            setPowerOn={setPowerOn}
+          />
         </Suspense>
         {/* Mount composer AFTER Suspense */}
         {/* <OrbitControls /> */}
@@ -42,11 +49,24 @@ const Page = () => {
           console.log("UI power button pressed")
           setPowerOn(false)
           setCamera("overview")
+          emit("configChange", {
+            voteMode: "STRICT",
+            gameMode: false
+          })
+          console.log(currentConfigMode, isGameMode)
         }} />
       )}
       <CameraFadePortal onReady={(fade) => setTriggerFade(() => fade)} />
+      {showInfoPortal && (
+        <InfoPortal>
+          <div className='absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1/3 h-1/3 border rounded-2xl'>
+            <div className="text-white text-2xl text-center">Welcome</div>
+          </div>
+        </InfoPortal>
+      )}
       <Leva collapsed />
     </div>
+
   </>);
 };
 export default Page;

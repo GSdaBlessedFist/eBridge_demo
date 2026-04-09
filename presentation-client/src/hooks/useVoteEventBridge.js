@@ -11,35 +11,6 @@ export function useVoteEventBridge() {
             const { color } = event.payload
             console.log("[VoteEventBridge] Processing vote:", color)
 
-            // const state = useVoteStore.getState()
-
-            // const votes = { ...state.votes }
-            // votes[color] = (votes[color] || 0) + 1
-
-            // const total = Object.values(votes).reduce((a, b) => a + b, 0)
-
-            // const percentages = {}
-            // Object.keys(votes).forEach((key) => {
-            //     percentages[key] = (votes[key] / total) * 100
-            // })
-
-            // let consensusColor = null
-            // let max = -1
-            // Object.entries(votes).forEach(([key, val]) => {
-            //     if (val > max) {
-            //         max = val
-            //         consensusColor = key
-            //     }
-            // })
-
-            // useVoteStore.setState({
-            //     userVotes,
-            //     votes,
-            //     percentages,
-            //     totalVoters: total,
-            //     consensusColor
-            // })
-
             // 2026-04-01 12:40
             const state = useVoteStore.getState()
 

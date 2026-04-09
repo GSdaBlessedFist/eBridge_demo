@@ -10,7 +10,8 @@ import colorMap from './colorMap'
 import { emit } from '@/stores/events/eventBus'
 
 export default function VoteButtons({ nodes, materials, powerOn }) {
-    const { castVote, resetVotes } = usePresentationSocket("room-123")
+    const { castVote } = usePresentationSocket("room-123")
+    const resetVote = useVoteStore((s) => s.resetVotes)
     const currentCamera = useCameraStore((state) => state.currentCamera)
     const setCamera = useCameraStore((state) => state.setCamera)
     const { refs, pressed, flash, update, triggerFlash } = useVoteAnimationController(materials)
@@ -26,7 +27,7 @@ export default function VoteButtons({ nodes, materials, powerOn }) {
             payload: { color }
         })
         castVote(color)
-        //console.log("[VoteButtons] event emitted:", color)  // <-- ADD THIS
+        console.log("[VoteButtons] event emitted:", color)  // <-- ADD THIS
         // Trigger animation via hook
         triggerFlash(color, flashDuration)
 

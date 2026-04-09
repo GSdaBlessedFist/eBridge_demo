@@ -7,12 +7,24 @@ export const useVoteStore = create((set) => ({
     consensusColor: null,
     userVotes: {},
 
-    setVoteState: ({ votes, percentages, totalVoters }) =>
-        set({
-            votes,
-            percentages,
-            totalVoters
-        }),
+    setVoteState: (payload) => {
+        console.log("[STORE] setVoteState called with:", payload)
+
+        set((state) => {
+            console.log("[STORE] BEFORE:", state)
+
+            const newState = {
+                ...state,
+                votes: payload.votes,
+                percentages: payload.percentages,
+                totalVoters: payload.totalVoters
+            }
+
+            console.log("[STORE] AFTER:", newState)
+
+            return newState
+        })
+    },
 
     setConsensus: (color) =>
         set({

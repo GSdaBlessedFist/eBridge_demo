@@ -22,7 +22,7 @@ import { useConfigStore } from '@/stores/useConfigStore'
 import { emit } from '@/stores/events/eventBus'
 
 export default function Model({ powerOn, setPowerOn }) {
-  // const { resetVotes } = usePresentationSocket("room-123")
+  const { updateConfig } = usePresentationSocket("room-123")
   const group = useRef()
   const { scene, nodes, materials, animations } = useGLTF('/models/eBridgeDemo_theThing.glb')
   const { actions } = useAnimations(animations, group)
@@ -49,14 +49,13 @@ export default function Model({ powerOn, setPowerOn }) {
   const [assemblyActionProgress, setAssemblyActionProgress] = useState(0);
 
   const percentages = useVoteStore((state) => state.percentages)
-  //useVoteEventBridge()
+
 
   //CONFIG section
   const topHiddenScreenRef = useRef()
   const topHiddenDisplayRef = useRef();
   const [configHtmlPos, setConfigHtmlPos] = useState([0, 0, 0]);
   const [configSlideCompleted, setConfigSlideCompleted] = useState(false);
-  const currentMode = useConfigStore(state => state.currentConfigMode)
   const setConfigMode = useConfigStore(state => state.setConfigMode)
 
 
@@ -184,20 +183,42 @@ export default function Model({ powerOn, setPowerOn }) {
   //Configuration functions
   function handleModeCycle() {
     emit({ type: 'CONFIG_MODE_CYCLE' })
+    const { isGameMode, currentConfigMode } = useConfigStore.getState()
+    console.log("[Socket 187] Emitted configChange:", currentConfigMode)
+    console.log("[Socket 188] Emitted configChange:", isGameMode)
+    updateConfig({
+      currentConfigMode: isGameMode ? "STRICT" : currentConfigMode,             // keep current voteMode
+      gameMode: isGameMode // toggle game mode
+    })
   }
+
   function handleGameMode() {
     emit({ type: "CONFIG_GAME_MODE" })
+    const { isGameMode, currentConfigMode } = useConfigStore.getState()
+    updateConfig({
+      currentConfigMode: isGameMode === true ? "STRICT" : currentConfigMode,             // keep current voteMode
+      gameMode: isGameMode // toggle game mode
+    })
   }
 
   function updateConfigLEDs() {
-    const { currentConfigMode } = useConfigStore.getState()
+    const { isGameMode, currentConfigMode } = useConfigStore.getState()
 
     Object.keys(ledRefs).forEach((mode) => {
       const mesh = ledRefs[mode].current
       if (!mesh) return
 
-      mesh.material.emissiveIntensity =
-        currentConfigMode === mode ? 3 : 0
+      if (isGameMode === true) {
+        if (mode === "STRICT") {
+          mesh.material.emissiveIntensity = 3
+        } else {
+          mesh.material.emissiveIntensity = 0
+        }
+      } else {
+        mesh.material.emissiveIntensity =
+          currentConfigMode === mode ? 3 : 0
+      }
+
     })
   }
 
@@ -320,6 +341,10 @@ export default function Model({ powerOn, setPowerOn }) {
 
   ////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////
+  useEffect(() => {
+    //console.log("RENDER", percentages)
+  }, [percentages]);
+
 
   useEffect(() => {
     if (currentCamera !== "demoMenu") {

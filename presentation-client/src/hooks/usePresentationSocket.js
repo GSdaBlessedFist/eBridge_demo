@@ -16,18 +16,23 @@ export const usePresentationSocket = (roomId) => {
 
         socketRef.current.emit("joinPresentation", roomId)
 
+        //console.log("[Socket] Registering voteUpdate listener")
         socketRef.current.on("voteUpdate", (payload) => {
-            console.log("[Socket] voteUpdate received:", payload)
-            setVoteState(payload)
+            //console.log("🔥 voteUpdate ACTUALLY RECEIVED:", payload)
+            setVoteState({
+                ...payload,
+                votes: { ...payload.votes },
+                percentages: { ...payload.percentages }
+            })
         })
 
         socketRef.current.on("consensusReached", (color) => {
-            console.log("[Socket] consensusReached:", color)
+            //console.log("[Socket] consensusReached:", color)
             setConsensus(color)
         })
 
         socketRef.current.on("consensusReset", () => {
-            console.log("[Socket] consensusReset")
+            //console.log("[Socket] consensusReset")
             resetConsensus()
         })
 
@@ -78,6 +83,17 @@ export const usePresentationSocket = (roomId) => {
         if (!socketRef.current) return
         socketRef.current.emit("resetVotes", { roomId })
     }
+    const updateConfig = ({ currentConfigMode, gameMode }) => {
+        if (!socketRef.current) return
+        socketRef.current.emit("configChange", {
+            roomId: "room-123",
+            voteMode: currentConfigMode,
+            gameMode
+        })
+        // console.log("[Socket 92] Emitted configChange:", currentConfigMode)
+        // console.log("[Socket 93] Emitted configChange:", gameMode)
+    }
     // Return castVote so components can use it
-    return { castVote, resetVotes }
+    return { castVote, resetVotes, updateConfig }
 }
+
