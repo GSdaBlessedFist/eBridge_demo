@@ -21,7 +21,7 @@ import { useVoteEventBridge } from '@/hooks/useVoteEventBridge'
 import { useConfigStore } from '@/stores/useConfigStore'
 import { emit } from '@/stores/events/eventBus'
 
-export default function Model({ powerOn, setPowerOn }) {
+export default function Model({ powerOn, setPowerOn, configSlideCompleted, setConfigSlideCompleted }) {
   const { updateConfig } = usePresentationSocket("room-123")
   const group = useRef()
   const { scene, nodes, materials, animations } = useGLTF('/models/eBridgeDemo_theThing.glb')
@@ -55,7 +55,6 @@ export default function Model({ powerOn, setPowerOn }) {
   const topHiddenScreenRef = useRef()
   const topHiddenDisplayRef = useRef();
   const [configHtmlPos, setConfigHtmlPos] = useState([0, 0, 0]);
-  const [configSlideCompleted, setConfigSlideCompleted] = useState(false);
   const setConfigMode = useConfigStore(state => state.setConfigMode)
 
 
@@ -332,18 +331,21 @@ export default function Model({ powerOn, setPowerOn }) {
     fontSize: { value: 0.2, min: 0.05, max: 1, step: 0.01 }
   })
   //[0, 1, 0.05]
-  const { posX, posY, posZ } = useControls("configText", {
-    posX: { value: 0, min: -5, max: 5, step: .01 },
-    posY: { value: 0, min: -5, max: 5, step: .01 },
-    posZ: { value: -2.6, min: -5, max: 5, step: .01 }
+  const { panelX, panelY, panelZ, factor } = useControls("configText", {
+    panelX: { value: .07, min: -5, max: 5, step: .001 },
+    panelY: { value: .7, min: -15, max: 5, step: .0001 },
+    panelZ: { value: -2.5, min: -5, max: 5, step: .001 },
+    factor: { value: .4, min: -0.25, max: 3, step: .001 }
   })
 
 
   ////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////
   useEffect(() => {
-    //console.log("RENDER", percentages)
-  }, [percentages]);
+    if (topHiddenScreenRef.current) {
+      console.log(topHiddenScreenRef.current.position)
+    }
+  }, [])
 
 
   useEffect(() => {
@@ -469,7 +471,7 @@ export default function Model({ powerOn, setPowerOn }) {
                       setPowerOn(false)
                       setCamera("overview")
                       setFirstClickDone(false)
-
+                      setConfigSlideCompleted(false)
                       // Optionally hide demoTexts
                       if (demoTextsRef.current) demoTextsRef.current.visible = false
                     }
@@ -527,12 +529,31 @@ export default function Model({ powerOn, setPowerOn }) {
                 </mesh>
               </group>
             </group>
-            <group name="Top_HiddenPanel" userData={{ name: 'Top_HiddenPanel' }}>
+            <group name="Top_HiddenPanel" wireframe userData={{ name: 'Top_HiddenPanel' }}>
               <group name="topHiddenPanel_A" userData={{ name: 'topHiddenPanel_A' }}>
                 <mesh name="topHiddenPanel_A_1" castShadow receiveShadow geometry={nodes.topHiddenPanel_A_1.geometry} material={materials.mainBody} />
                 <mesh name="topHiddenPanel_A_2" castShadow receiveShadow geometry={nodes.topHiddenPanel_A_2.geometry} material={materials.topHidden_screenBlack} />
                 <mesh name="topHiddenPanel_A_3" castShadow receiveShadow geometry={nodes.topHiddenPanel_A_3.geometry} material={materials.mainBodyGrooveLights} />
                 <mesh ref={topHiddenScreenRef} name="topHidden_screen" castShadow receiveShadow geometry={nodes.topHidden_screen.geometry} material={materials.topHidden_screen} position={[0, 0, 1.079]} userData={{ name: 'topHidden_screen' }} >
+                  {configSlideCompleted && (
+                    <Html
+                      transform
+                      occlude={false}
+                      distanceFactor={.3984}
+                      position={[.07, 0.7, -2.5]}
+                      rotation={[-Math.PI / 2, 0, 0]}
+                    >
+                      <div style={{
+                        width: "2707px",
+                        height: "946px",
+                        transform: "scale(1)",
+                        background: "rgba(255,0,0,.8)",
+                        color: "white"
+                      }}>
+                        TEST PANEL
+                      </div>
+                    </Html>
+                  )}
 
                 </mesh>
               </group>

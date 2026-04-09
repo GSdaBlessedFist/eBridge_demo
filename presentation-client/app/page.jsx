@@ -23,12 +23,13 @@ const Page = () => {
   const [showInfoPortal, setShowInfoPortal] = useState(false)
   const [powerOn, setPowerOn] = useState(false)
   const setCamera = useCameraStore((state) => state.setCamera)
+  const [configSlideCompleted, setConfigSlideCompleted] = useState(false);
   const { currentConfigMode, isGameMode } = useConfigStore.getState()
 
   return (<>
     <div className="h-screen w-full relative">
 
-      <Canvas className="h-full w-full" gl={{ antialias: true }}>
+      <Canvas className="h-full w-full" gl={{ antialias: true }} >
         <Suspense fallback={<Html>Loading...</Html>}>
           <CameraManager triggerFade={triggerFade} />
           {/* <Environment background={true} preset='city' /> */}
@@ -37,6 +38,8 @@ const Page = () => {
           <directionalLight position={[0, 0, 5]} intensity={1} />
           <Model powerOn={powerOn}
             setPowerOn={setPowerOn}
+            configSlideCompleted={configSlideCompleted}
+            setConfigSlideCompleted={setConfigSlideCompleted}
           />
         </Suspense>
         {/* Mount composer AFTER Suspense */}
@@ -49,6 +52,7 @@ const Page = () => {
           console.log("UI power button pressed")
           setPowerOn(false)
           setCamera("overview")
+          setConfigSlideCompleted(false)
           emit("configChange", {
             voteMode: "STRICT",
             gameMode: false
@@ -60,12 +64,12 @@ const Page = () => {
       {showInfoPortal && (
         <InfoPortal>
           <div className='absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1/3 h-1/3 border rounded-2xl'>
-            <div className="text-white text-2xl text-center">Welcome</div>
+            <div className="text-white text-2xl text-center">/components/ configurationInfo.js</div>
           </div>
         </InfoPortal>
       )}
-      <Leva collapsed />
     </div>
+    <Leva collapsed />
 
   </>);
 };
