@@ -36,7 +36,6 @@ on((event) => {
     if (event.type === "CONFIG_GAME_MODE") {
         useConfigStore.setState((state) => {
             console.log('GameMode toggled:', !state.isGameMode)
-
             return {
                 isGameMode: !state.isGameMode
             }

@@ -7,6 +7,20 @@ export const useVoteStore = create((set) => ({
     consensusColor: null,
     userVotes: {},
 
+    calculatePercentages: () => {
+        const { votes, totalVoters } = get()
+        const percentages = {}
+        if (totalVoters === 0) {
+            set({ percentages: { red: 0, green: 0, blue: 0 } })
+            return
+        }
+
+        for (const color in votes) {
+            percentages[color] = (votes[color] / totalVoters) * 100
+        }
+
+        set({ percentages })
+    },
     setVoteState: (payload) => {
         console.log("[STORE] setVoteState called with:", payload)
 
@@ -19,6 +33,11 @@ export const useVoteStore = create((set) => ({
                 percentages: payload.percentages,
                 totalVoters: payload.totalVoters
             }
+
+            newState.percentages = Object.keys(newState.votes).reduce((acc, color) => {
+                acc[color] = (newState.votes[color] / (newState.totalVoters || 1)) * 100
+                return acc
+            }, {})
 
             console.log("[STORE] AFTER:", newState)
 

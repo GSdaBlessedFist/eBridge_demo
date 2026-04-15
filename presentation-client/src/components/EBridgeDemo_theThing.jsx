@@ -22,7 +22,7 @@ import { useConfigStore } from '@/stores/useConfigStore'
 import { emit } from '@/stores/events/eventBus'
 
 export default function Model({ powerOn, setPowerOn, configSlideCompleted, setConfigSlideCompleted }) {
-  const { updateConfig } = usePresentationSocket("room-123")
+  const { updateConfig, resetVotes } = usePresentationSocket("room-123")
   const group = useRef()
   const { scene, nodes, materials, animations } = useGLTF('/models/eBridgeDemo_theThing.glb')
   const { actions } = useAnimations(animations, group)
@@ -48,8 +48,9 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
   const [firstClickDone, setFirstClickDone] = useState(false)
   const [assemblyActionProgress, setAssemblyActionProgress] = useState(0);
 
+  const votes = useVoteStore((state) => state.votes)
   const percentages = useVoteStore((state) => state.percentages)
-
+  const isGameMode = useConfigStore((state) => state.isGameMode)
 
   //CONFIG section
   const topHiddenScreenRef = useRef()
@@ -198,6 +199,7 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
       currentConfigMode: isGameMode === true ? "STRICT" : currentConfigMode,             // keep current voteMode
       gameMode: isGameMode // toggle game mode
     })
+    resetVotes("room-123")
   }
 
   function updateConfigLEDs() {
@@ -228,6 +230,15 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
       isGameMode ? 3 : 0
 
   }
+
+  //Config UI
+  const goal = 5
+  const redCount = votes.red || 0
+  const greenCount = votes.green || 0
+  const blueCount = votes.blue || 0
+
+
+
 
   //Setup functions
   // 2026-04-01 10:20
@@ -534,27 +545,28 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
                 <mesh name="topHiddenPanel_A_1" castShadow receiveShadow geometry={nodes.topHiddenPanel_A_1.geometry} material={materials.mainBody} />
                 <mesh name="topHiddenPanel_A_2" castShadow receiveShadow geometry={nodes.topHiddenPanel_A_2.geometry} material={materials.topHidden_screenBlack} />
                 <mesh name="topHiddenPanel_A_3" castShadow receiveShadow geometry={nodes.topHiddenPanel_A_3.geometry} material={materials.mainBodyGrooveLights} />
-                <mesh ref={topHiddenScreenRef} name="topHidden_screen" castShadow receiveShadow geometry={nodes.topHidden_screen.geometry} material={materials.topHidden_screen} position={[0, 0, 1.079]} userData={{ name: 'topHidden_screen' }} >
+                <mesh ref={topHiddenScreenRef} name="topHidden_screen" castShadow receiveShadow geometry={nodes.topHidden_screen.geometry} position={[0, 0, 1.079]} userData={{ name: 'topHidden_screen' }} >
+                  <meshStandardMaterial transparent opacity={0.61} roughness={.015} metalness={.91} side={THREE.DoubleSide} />
                   {configSlideCompleted && (
                     <Html
                       transform
                       occlude={false}
                       distanceFactor={.3984}
-                      position={[.07, 0.7, -2.5]}
+                      position={[.05, 0.7, -2.50]}
                       rotation={[-Math.PI / 2, 0, 0]}
                     >
-                      <div style={{
-                        width: "2707px",
-                        height: "946px",
-                        transform: "scale(1)",
-                        background: "rgba(255,0,0,.8)",
-                        color: "white"
-                      }}>
-                        TEST PANEL
-                      </div>
+                      <ConfigUI
+                        redCount={redCount}
+                        greenCount={greenCount}
+                        blueCount={blueCount}
+                        goal={goal}
+                        mode={"PERSISTENT"}
+                        tenMode={isGameMode}
+                        percentages={percentages}
+                      />
+
                     </Html>
                   )}
-
                 </mesh>
               </group>
             </group>

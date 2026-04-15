@@ -61,32 +61,6 @@ io.on('connection', (socket) => {
     /////////////////////////////////////////////////
     /////////////////////////////////////////////////
 
-    // Handle vote cast
-    // socket.on('castVote', ({ roomId, color }) => {
-    //     // Rate limiting
-    //     if (!rateLimiter.canVote(socket.id)) return
-
-    //     const room = getRoom(roomId)
-    //     if (!room) return
-
-    //     // Register the vote
-    //     registerVote(roomId, socket.id, color)
-
-    //     // Broadcast updated vote state
-    //     io.to(roomId).emit('voteUpdate', {
-    //         votes: room.votes,
-    //         percentages: calculatePercentages(room),
-    //         totalVoters: room.totalVoters
-    //     })
-
-    //     // Check consensus
-    //     const consensusColor = allSameColor(room)
-    //     if (consensusColor) {
-    //         io.to(roomId).emit('consensusReached', consensusColor)
-    //     } else {
-    //         io.to(roomId).emit('consensusReset')
-    //     }
-    // })
 
     //-------------------------------------------------------
     socket.on('castVote', ({ roomId, color }) => {
@@ -126,58 +100,11 @@ io.on('connection', (socket) => {
         console.log("[CAST VOTE] Current Config:", voteMode, isGameMode);
         // // -----------------------------
         // // 5. Apply logic based on mode
-        // // -----------------------------
-        // if (isGameMode) {
-        //     // Example: first to 3 votes wins (adjust as needed)
-        //     if (room.votes[color] >= 10) {
-        //         room.winner = color
-        //         io.to(roomId).emit("consensusReached", color)
-        //     }
-        // } else {
-        //     // Config modes: STRICT / PERSISTENT / ACTIVE_ONLY
-        //     let votesToCount = { ...room.votes }
 
-        //     if (voteMode === "STRICT") {
-        //         // Only count votes of connected participants
-        //         votesToCount = {}
-        //         for (const [id, c] of Object.entries(room.voters)) {
-        //             if (io.sockets.sockets.get(id)) votesToCount[c] = (votesToCount[c] || 0) + 1
-        //         }
-        //     } else if (voteMode === "ACTIVE_ONLY") {
-        //         // Count votes of connected participants but do NOT remove disconnected votes
-        //         for (const [id, c] of Object.entries(room.voters)) {
-        //             if (!io.sockets.sockets.get(id)) continue
-        //             votesToCount[c] = (votesToCount[c] || 0) + 1
-        //         }
-        //     }
-        //     // PERSISTENT counts all votes by default, no change needed
-
-        //     // -----------------------------
-        //     // Check for consensus in config mode
-        //     // -----------------------------
-        //     const uniqueColors = Object.keys(votesToCount)
-        //     const totalVotes = Object.values(votesToCount).reduce((a, b) => a + b, 0)
-
-        //     if (
-        //         voteMode === "STRICT" &&
-        //         uniqueColors.length === 1 &&
-        //         totalVotes === Object.keys(room.voters).length && // everyone voted
-        //         totalVotes > 1 // at least 2 participants
-        //     ) {
-        //         const winner = uniqueColors[0]
-        //         console.log("[DEBUG] SETTING WINNER (STRICT):", winner)
-        //         room.winner = winner
-        //         io.to(roomId).emit("consensusReached", winner)
-        //     }
-        // }
-
-        // -----------------------------
-        // 5. Apply logic based on mode
-        // -----------------------------
         console.log("isGameMode:", isGameMode)
         if (isGameMode) {
             // Game mode: lock when a color reaches threshold
-            const THRESHOLD = 3
+            const THRESHOLD = 5
             if (room.votes[color] >= THRESHOLD) {
                 room.winner = color
                 io.to(roomId).emit("consensusReached", color)

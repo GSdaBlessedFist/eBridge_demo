@@ -6,7 +6,7 @@ const modeInfo = {
     },
     PERSISTENT: {
         title: "PERSISTENT",
-        description: "All votes are stored and accumulated over time.",
+        description: "Votes are stored, accumulating over time.",
         behavior: "Every vote contributes to the total."
     },
     ACTIVE_ONLY: {
@@ -15,3 +15,5 @@ const modeInfo = {
         behavior: "Votes disappear when users leave."
     }
 }
+
+export default modeInfo

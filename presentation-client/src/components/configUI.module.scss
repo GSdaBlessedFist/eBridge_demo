@@ -1,30 +1,121 @@
-.frame {
-    @apply w-[230px] h-[80px] border text-red-500 border-red-500;
+.uiFrame {
+    transform: scale(1);
+    @apply w-[2675px] h-[918px] border-[15px] font-audiowide;
     image-rendering: auto;
     -webkit-font-smoothing: antialiased;
 }
 
-.uiGrid {
-    @apply relative grid w-full h-full;
-    grid-template-columns: 70% 30%;
-    grid-template-rows: 70% 30%;
-    grid-template-areas: "main number"
-        "additional number";
+.modules {
+    @apply w-full h-full flex justify-around items-center;
+
+    .moduleInfo {
+        @apply w-[568px] h-[850px] flex flex-col justify-around items-center border-8 border-red-400;
+    }
+
+    .moduleHero {
+        @apply w-[1432px] h-[850px] flex justify-evenly items-center border-8 border-red-400;
+    }
+
+    .moduleResults {
+        @apply w-[568px] h-[850px] flex flex-col gap-8 justify-center items-center border-8 border-red-400;
+
+
+    }
+}
+
+//.moduleInfo
+.configurationModeSection {
+    @apply w-[498px] h-[140px] border-4 flex justify-center items-center border-red-400 text-red-400 text-6xl text-center font-audiowide;
+}
+
+.configurationInfoSection {
+    @apply w-[498px] h-[140px] text-red-400 text-5xl text-left font-audiowide border-red-400;
+}
+
+.configurationDataSection {
+    @apply w-[498px] h-[448px] border-4 border-red-400;
+}
+
+//.moduleHero  19
+.heroSpacer {
+    @apply w-[250px] h-[770px] flex flex-col bg-red-900 opacity-45;
 
 
 }
 
-.main {
-    grid-area: main;
-    @apply h-full bg-red-300;
+.centerSection {
+    @apply w-[820px] h-[770px] flex flex-col gap-8 justify-center items-center;
 }
 
-.additional {
-    grid-area: additional;
-    @apply h-full bg-orange-400;
+.raceToTenSection {
+    @apply w-[820px] h-[140px] flex justify-center items-center font-audiowide text-red-400 text-8xl border-4 border-red-400;
 }
 
-.number {
-    grid-area: number;
-    @apply h-full bg-green-400;
+.visualSection {
+    @apply w-[820px] h-[660px] flex justify-around items-center;
+
+    .visualsColumns {
+        @apply w-[215px] h-[586px] flex flex-col justify-between border border-red-400;
+
+        .entireBar {
+            @apply w-[215px] h-[420px] flex flex-col-reverse justify-between border-red-400;
+
+            .bar {
+                @apply w-full h-[35px] bg-red-900;
+            }
+
+            .activeBar {
+                @apply w-full h-[35px] bg-red-400;
+
+            }
+        }
+
+        .labelGroup {
+            @apply w-[215px] h-[154px] flex flex-col justify-center items-center border;
+
+            .optionLabel {
+                @apply mb-2 text-red-400 text-4xl;
+            }
+
+            .fractions {
+                @apply m-3 text-red-400 text-4xl;
+            }
+        }
+    }
+
+}
+
+//.moduleResults
+
+.resultsTopSection {
+    @apply w-[495px] h-[646px] flex justify-between items-center border-red-400;
+
+    .resultsSpacer {
+        @apply w-[112px] h-[646px] bg-red-900 opacity-40;
+    }
+
+    .resultsMain {
+        @apply w-[236px] h-[646px] flex flex-col justify-around items-center;
+
+        .resultLabelGroup {
+            @apply w-[170px] h-[172px] flex flex-col justify-center items-center;
+
+            .resultLabel {
+                @apply text-white text-4xl text-red-400;
+            }
+
+            .resultOption {
+                @apply w-3/4 h-3/4 flex justify-center items-center text-8xl text-red-400;
+            }
+        }
+    }
+}
+
+.resultsWinnerSection {
+    @apply w-[495px] h-[110px] flex justify-center items-center text-red-400 text-7xl font-audiowide border-4 border-red-400;
+
+}
+
+.resultsWinnerFound {
+    @apply w-[495px] h-[110px] flex justify-center items-center text-opacity-0 text-7xl font-audiowide bg-red-900;
 }
