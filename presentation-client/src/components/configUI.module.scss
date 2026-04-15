@@ -9,7 +9,7 @@
     @apply w-full h-full flex justify-around items-center;
 
     .moduleInfo {
-        @apply w-[568px] h-[850px] flex flex-col justify-around items-center border-8 border-red-400;
+        @apply w-[568px] h-[850px] flex flex-col justify-between items-center border-8 border-red-400;
     }
 
     .moduleHero {
@@ -25,15 +25,15 @@
 
 //.moduleInfo
 .configurationModeSection {
-    @apply w-[498px] h-[140px] border-4 flex justify-center items-center border-red-400 text-red-400 text-6xl text-center font-audiowide;
+    @apply mt-4 w-[498px] h-[140px] border-4 flex justify-center items-center border-red-400 text-red-400 text-6xl text-center font-audiowide;
 }
 
 .configurationInfoSection {
-    @apply w-[498px] h-[140px] text-red-400 text-5xl text-left font-audiowide border-red-400;
+    @apply border w-[498px] text-red-400 text-5xl flex justify-center items-center text-left font-audiowide border-red-400;
 }
 
 .configurationDataSection {
-    @apply w-[498px] h-[448px] border-4 border-red-400;
+    @apply mb-4 w-[498px] h-[400px] border-4 border-red-400;
 }
 
 //.moduleHero  19
@@ -117,5 +117,5 @@
 }
 
 .resultsWinnerFound {
-    @apply w-[495px] h-[110px] flex justify-center items-center text-opacity-0 text-7xl font-audiowide bg-red-900;
+    @apply w-[495px] h-[110px] flex justify-center items-center text-red-400 text-7xl font-audiowide bg-red-900;
 }

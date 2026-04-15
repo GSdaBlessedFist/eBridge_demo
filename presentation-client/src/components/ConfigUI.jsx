@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import styles from "./configUI.module.scss";
 import modeInfo from "./ configurationInfo";
 import { useConfigStore } from "@/stores/useConfigStore";
+
 function ConfigUI({ redCount, greenCount, blueCount, mode, tenMode, goal, percentages }) {
     const currentMode = modeInfo[mode];
     const options = [

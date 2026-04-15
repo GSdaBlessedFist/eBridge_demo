@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { on } from "./events/eventBus";
 
-const modes = ['STRICT', 'PERSISTENT', 'ACTIVE']
+const modes = ['STRICT', 'PERSISTENT', 'ACTIVE_ONLY']
 
 export const useConfigStore = create((set) => ({
     currentConfigMode: "STRICT",

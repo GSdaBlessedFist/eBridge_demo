@@ -35,7 +35,7 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
   const ledRefs = {
     STRICT: useRef(),
     PERSISTENT: useRef(),
-    ACTIVE: useRef()
+    ACTIVE_ONLY: useRef()
   }
   const gameModeButtonRef = useRef();
 
@@ -56,6 +56,7 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
   const topHiddenScreenRef = useRef()
   const topHiddenDisplayRef = useRef();
   const [configHtmlPos, setConfigHtmlPos] = useState([0, 0, 0]);
+  const currentConfigMode = useConfigStore((state) => state.currentConfigMode)
   const setConfigMode = useConfigStore(state => state.setConfigMode)
 
 
@@ -183,7 +184,6 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
   //Configuration functions
   function handleModeCycle() {
     emit({ type: 'CONFIG_MODE_CYCLE' })
-    const { isGameMode, currentConfigMode } = useConfigStore.getState()
     console.log("[Socket 187] Emitted configChange:", currentConfigMode)
     console.log("[Socket 188] Emitted configChange:", isGameMode)
     updateConfig({
@@ -194,7 +194,6 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
 
   function handleGameMode() {
     emit({ type: "CONFIG_GAME_MODE" })
-    const { isGameMode, currentConfigMode } = useConfigStore.getState()
     updateConfig({
       currentConfigMode: isGameMode === true ? "STRICT" : currentConfigMode,             // keep current voteMode
       gameMode: isGameMode // toggle game mode
@@ -203,8 +202,6 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
   }
 
   function updateConfigLEDs() {
-    const { isGameMode, currentConfigMode } = useConfigStore.getState()
-
     Object.keys(ledRefs).forEach((mode) => {
       const mesh = ledRefs[mode].current
       if (!mesh) return
@@ -224,7 +221,6 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
   }
 
   function updateGameModeLED() {
-    const { isGameMode } = useConfigStore.getState()
     if (!gameModeButtonRef.current) return;
     gameModeButtonRef.current.material.emissiveIntensity =
       isGameMode ? 3 : 0
@@ -232,7 +228,7 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
   }
 
   //Config UI
-  const goal = 5
+  const goal = 3
   const redCount = votes.red || 0
   const greenCount = votes.green || 0
   const blueCount = votes.blue || 0
@@ -445,7 +441,9 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
   })
 
 
-
+  useEffect(() => {
+    console.log("currentConfigMode: ", currentConfigMode)
+  }, [currentConfigMode]);
 
   return (<>
     <group ref={group} dispose={null}>
@@ -534,7 +532,7 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
                 <mesh name="configurationDecal_Persistent" castShadow receiveShadow geometry={nodes.configurationDecal_Persistent.geometry} material={nodes.configurationDecal_Persistent.material} position={[1.251, 0.965, -1.888]} userData={{ name: 'configurationDecal_Persistent' }} />
                 <mesh name="configurationDecal_Strict" castShadow receiveShadow geometry={nodes.configurationDecal_Strict.geometry} material={nodes.configurationDecal_Strict.material} position={[1.109, 0.965, -1.886]} userData={{ name: 'configurationDecal_Strict' }} />
                 <mesh name="configurationModeSelectorBase" castShadow receiveShadow geometry={nodes.configurationModeSelectorBase.geometry} material={materials.mainBody} position={[0.736, 0, -0.208]} userData={{ name: 'configurationModeSelectorBase' }}>
-                  <mesh ref={ledRefs.ACTIVE} name="configurationModeLED_ACTIVE" castShadow receiveShadow geometry={nodes.configurationModeLED_ACTIVE.geometry} material={materials.configurationModeLED} userData={{ name: 'configurationModeLED_ACTIVE' }} />
+                  <mesh ref={ledRefs.ACTIVE_ONLY} name="configurationModeLED_ACTIVE" castShadow receiveShadow geometry={nodes.configurationModeLED_ACTIVE.geometry} material={materials.configurationModeLED} userData={{ name: 'configurationModeLED_ACTIVE' }} />
                   <mesh ref={ledRefs.PERSISTENT} name="configurationModeLED_PERSISTENT" castShadow receiveShadow geometry={nodes.configurationModeLED_PERSISTENT.geometry} material={materials.configurationModeLED} userData={{ name: 'configurationModeLED_PERSISTENT' }} />
                   <mesh ref={ledRefs.STRICT} name="configurationModeLED_STRICT" castShadow receiveShadow geometry={nodes.configurationModeLED_STRICT.geometry} material={materials.configurationModeLED} userData={{ name: 'configurationModeLED_STRICT' }} />
                 </mesh>
@@ -560,7 +558,7 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
                         greenCount={greenCount}
                         blueCount={blueCount}
                         goal={goal}
-                        mode={"PERSISTENT"}
+                        mode={currentConfigMode}
                         tenMode={isGameMode}
                         percentages={percentages}
                       />
