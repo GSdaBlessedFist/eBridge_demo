@@ -21,9 +21,9 @@ function ConfigUI({ redCount, greenCount, blueCount, mode, tenMode, goal, percen
         <div className={styles.uiFrame}>
             <div className={styles.modules}>
                 <div className={styles.moduleInfo}>
-                    <div className={styles.configurationModeSection}>{currentMode.title}</div>
+                    <div className={styles.configurationModeSection}>{tenMode ? "STRICT" : currentMode.title}</div>
                     <div className={styles.configurationInfoSection}>
-                        {currentMode.description}
+                        {tenMode ? modeInfo["STRICT"].description : currentMode.description}
                     </div>
                     <div className={styles.configurationDataSection}></div>
                 </div>
@@ -34,9 +34,11 @@ function ConfigUI({ redCount, greenCount, blueCount, mode, tenMode, goal, percen
                         <div className={styles.visualSection}>
                             {options.map((option, i) => {
 
+                                const percentValue = percentages?.[option.color] ?? 0;
+
                                 const normalizedFill = tenMode
                                     ? option.count
-                                    : Math.round((percentages?.[option.color] / 100) * goal);
+                                    : Math.round((percentValue / 100) * goal);
 
                                 return (
                                     <div key={i} className={styles.visualsColumns}>

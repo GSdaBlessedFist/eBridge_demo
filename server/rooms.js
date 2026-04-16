@@ -28,12 +28,16 @@ function removeVoter(roomId, socketId) {
     const room = rooms.get(roomId)
     if (!room) return
 
+    console.log("[removeVoter BEFORE]", room.voters)
+
     const previousVote = room.voters[socketId]
     if (previousVote) {
         room.votes[previousVote]--
     }
 
     delete room.voters[socketId]
+
+    console.log("[removeVoter AFTER]", room.voters)
 }
 
 function registerVote(roomId, socketId, color) {
@@ -87,7 +91,8 @@ function allSameColor(room) {
 function resetVotes(roomId) {
     const room = getRoom(roomId)
     room.votes = {}
-    room.voters = {}
+    //room.voters = {}
+    room.winner = null
     return room
 }
 

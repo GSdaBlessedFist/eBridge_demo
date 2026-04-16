@@ -8,7 +8,8 @@ const { getRoom,
     registerVote,
     calculatePercentages,
     allSameColor,
-    resetVotes } = require('./rooms')
+    resetVotes,
+    removeVoter } = require('./rooms')
 
 const app = express()
 const server = http.createServer(app)
@@ -25,6 +26,7 @@ io.on('connection', (socket) => {
 
     // Join a room
     socket.on('joinPresentation', (roomId) => {
+        socket.data.roomId = roomId
         socket.join(roomId)
         console.log(`${socket.id} joined room ${roomId}`)
 
@@ -102,34 +104,89 @@ io.on('connection', (socket) => {
         // // 5. Apply logic based on mode
 
         console.log("isGameMode:", isGameMode)
-        if (isGameMode) {
-            // Game mode: lock when a color reaches threshold
-            const THRESHOLD = 5
-            if (room.votes[color] >= THRESHOLD) {
-                room.winner = color
-                io.to(roomId).emit("consensusReached", color)
-                console.log("[GAME MODE] Winner reached:", color)
-            }
-        } else {
-            // Config modes: STRICT / PERSISTENT / ACTIVE_ONLY
-            let votesToCount = { ...room.votes }
+        // if (isGameMode) {
+        //     // Game mode: lock when a color reaches threshold
+        //     const THRESHOLD = 5
+        //     if (room.votes[color] >= THRESHOLD) {
+        //         room.winner = color
+        //         io.to(roomId).emit("consensusReached", color)
+        //         console.log("[GAME MODE] Winner reached:", color)
+        //     }
+        // } else {
+        //     // Config modes: STRICT / PERSISTENT / ACTIVE_ONLY
+        //     let votesToCount = { ...room.votes }
 
-            if (voteMode === "STRICT") {
-                // Only count votes of connected participants
-                votesToCount = {}
-                for (const [id, c] of Object.entries(room.voters)) {
-                    if (io.sockets.sockets.get(id)) votesToCount[c] = (votesToCount[c] || 0) + 1
-                }
-            } else if (voteMode === "ACTIVE_ONLY") {
-                for (const [id, c] of Object.entries(room.voters)) {
-                    if (!io.sockets.sockets.get(id)) continue
+        //     if (voteMode === "STRICT") {
+        //         // Only count votes of connected participants
+        //         votesToCount = {}
+        //         for (const [id, c] of Object.entries(room.voters)) {
+        //             if (io.sockets.sockets.get(id)) votesToCount[c] = (votesToCount[c] || 0) + 1
+        //         }
+        //     } else if (voteMode === "ACTIVE_ONLY") {
+        //         for (const [id, c] of Object.entries(room.voters)) {
+        //             if (!io.sockets.sockets.get(id)) continue
+        //             votesToCount[c] = (votesToCount[c] || 0) + 1
+        //         }
+        //     }
+        //     // PERSISTENT counts all votes, no change needed
+
+        //     // -----------------------------
+        //     // Check for consensus in STRICT/PERSISTENT/ACTIVE_ONLY
+        //     // -----------------------------
+        //     const uniqueColors = Object.keys(votesToCount)
+        //     const totalVotes = Object.values(votesToCount).reduce((a, b) => a + b, 0)
+
+        //     if (
+        //         voteMode === "STRICT" &&
+        //         uniqueColors.length === 1 &&
+        //         totalVotes === Object.keys(room.voters).length && // everyone voted
+        //         totalVotes > 1
+        //     ) {
+        //         const winner = uniqueColors[0]
+        //         console.log("[STRICT] Consensus detected:", winner)
+        //         // Only emit event, do NOT lock voting
+        //         io.to(roomId).emit("consensusReached", winner)
+        //     }
+        // }
+
+        let votesToCount = { ...room.votes } //04/15
+
+        // -----------------------------
+        // A. Apply vote mode (ALWAYS)
+        // -----------------------------
+        if (voteMode === "STRICT") {
+            votesToCount = {}
+            for (const [id, c] of Object.entries(room.voters)) {
+                if (io.sockets.sockets.get(id)) {
                     votesToCount[c] = (votesToCount[c] || 0) + 1
                 }
             }
-            // PERSISTENT counts all votes, no change needed
+        } else if (voteMode === "ACTIVE_ONLY") {
+            votesToCount = {}
+            for (const [id, c] of Object.entries(room.voters)) {
+                if (!io.sockets.sockets.get(id)) continue
+                votesToCount[c] = (votesToCount[c] || 0) + 1
+            }
+        }
+        // PERSISTENT = no change
 
+        // -----------------------------
+        // B. Apply GAME MODE (Race)
+        // -----------------------------
+        if (isGameMode) {
+            const THRESHOLD = 5
+
+            for (const [color, count] of Object.entries(votesToCount)) {
+                if (count >= THRESHOLD) {
+                    room.winner = color
+                    io.to(roomId).emit("consensusReached", color)
+                    console.log("[GAME MODE] Winner reached:", color)
+                    break
+                }
+            }
+        } else {
             // -----------------------------
-            // Check for consensus in STRICT/PERSISTENT/ACTIVE_ONLY
+            // C. STRICT consensus logic
             // -----------------------------
             const uniqueColors = Object.keys(votesToCount)
             const totalVotes = Object.values(votesToCount).reduce((a, b) => a + b, 0)
@@ -137,23 +194,24 @@ io.on('connection', (socket) => {
             if (
                 voteMode === "STRICT" &&
                 uniqueColors.length === 1 &&
-                totalVotes === Object.keys(room.voters).length && // everyone voted
+                totalVotes === Object.keys(room.voters).length &&
                 totalVotes > 1
             ) {
                 const winner = uniqueColors[0]
                 console.log("[STRICT] Consensus detected:", winner)
-                // Only emit event, do NOT lock voting
                 io.to(roomId).emit("consensusReached", winner)
             }
         }
 
-
         // -----------------------------
         // 6. Always send vote update
         // -----------------------------
+
+
         console.log("[Server] Emitting voteUpdate:", room.votes)
         io.to(roomId).emit("voteUpdate", {
-            votes: room.votes,
+            votes: votesToCount,
+            raceVotes: room.votes,
             percentages: calculatePercentages(room),
             totalVoters: Object.keys(room.voters).length
         })
@@ -166,31 +224,35 @@ io.on('connection', (socket) => {
 
     // 2026-03-02 00:30
     socket.on('disconnect', () => {
-        console.log('Client disconnected:', socket.id)
+        const roomId = socket.data.roomId
 
-        // socket.rooms includes:
-        // - the socket's own ID
-        // - any joined rooms
-        for (const roomId of socket.rooms) {
-            if (roomId === socket.id) continue
+        if (!roomId) return
 
-            const room = getRoom(roomId)
+        console.log('Disconnect cleanup for room:', roomId)
 
-            removeVoter(roomId, socket.id)
 
-            io.to(roomId).emit('voteUpdate', {
-                votes: room.votes,
-                percentages: calculatePercentages(room),
-                totalVoters: Object.keys(room.voters).length
-            })
+        const room = getRoom(roomId)
+        if (!room) return
 
-            const consensusColor = allSameColor(room)
-            if (consensusColor) {
-                io.to(roomId).emit('consensusReached', consensusColor)
-            } else {
-                io.to(roomId).emit('consensusReset')
-            }
+        console.log('[BEFORE REMOVE]', room.voters)
+
+        removeVoter(roomId, socket.id)
+
+        console.log('[AFTER REMOVE]', room.voters)
+
+        io.to(roomId).emit('voteUpdate', {
+            votes: room.votes,
+            percentages: calculatePercentages(room),
+            totalVoters: Object.keys(room.voters).length
+        })
+
+        const consensusColor = allSameColor(room)
+        if (consensusColor) {
+            io.to(roomId).emit('consensusReached', consensusColor)
+        } else {
+            io.to(roomId).emit('consensusReset')
         }
+
     })
 
     // 2026-03-02 00:18

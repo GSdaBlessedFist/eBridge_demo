@@ -6,6 +6,8 @@ export const useVoteStore = create((set) => ({
     totalVoters: 0,
     consensusColor: null,
     userVotes: {},
+    voteMode: "STRICT",
+    gameMode: false,
 
     calculatePercentages: () => {
         const { votes, totalVoters } = get()
@@ -34,10 +36,15 @@ export const useVoteStore = create((set) => ({
                 totalVoters: payload.totalVoters
             }
 
-            newState.percentages = Object.keys(newState.votes).reduce((acc, color) => {
-                acc[color] = (newState.votes[color] / (newState.totalVoters || 1)) * 100
-                return acc
-            }, {})
+            // newState.percentages = Object.keys(newState.votes).reduce((acc, color) => {
+            //     acc[color] = (newState.votes[color] / (newState.totalVoters || 1)) * 100
+            //     return acc
+            // }, {})
+            newState.percentages = {
+                red: (newState.votes.red || 0) / (newState.totalVoters || 1) * 100,
+                green: (newState.votes.green || 0) / (newState.totalVoters || 1) * 100,
+                blue: (newState.votes.blue || 0) / (newState.totalVoters || 1) * 100
+            }
 
             console.log("[STORE] AFTER:", newState)
 
@@ -57,7 +64,9 @@ export const useVoteStore = create((set) => ({
 
     setConfig: ({ voteMode, gameMode }) =>
         set((state) => ({
-            voteMode: voteMode ?? state.voteMode,
-            gameMode: gameMode ?? state.gameMode
+            // voteMode: voteMode ?? state.voteMode,
+            // gameMode: gameMode ?? state.gameMode
+            voteMode: "STRICT",
+            gameMode: false,
         }))
 }))

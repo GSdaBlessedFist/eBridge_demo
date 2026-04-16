@@ -193,10 +193,11 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
   }
 
   function handleGameMode() {
+    const nextGameMode = !isGameMode
     emit({ type: "CONFIG_GAME_MODE" })
     updateConfig({
-      currentConfigMode: isGameMode === true ? "STRICT" : currentConfigMode,             // keep current voteMode
-      gameMode: isGameMode // toggle game mode
+      currentConfigMode: nextGameMode === true ? "STRICT" : currentConfigMode,             // keep current voteMode
+      gameMode: nextGameMode // toggle game mode
     })
     resetVotes("room-123")
   }
@@ -228,7 +229,7 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
   }
 
   //Config UI
-  const goal = 3
+  const goal = 5
   const redCount = votes.red || 0
   const greenCount = votes.green || 0
   const blueCount = votes.blue || 0

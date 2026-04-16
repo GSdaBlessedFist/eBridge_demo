@@ -8,9 +8,10 @@ import { useVoteAnimationController } from '@/hooks/useVoteAnimationController'
 import { useCameraStore } from '@/stores/useCameraStore'
 import colorMap from './colorMap'
 import { emit } from '@/stores/events/eventBus'
+import { usePresentation } from '@/context/PresentationContext'
 
 export default function VoteButtons({ nodes, materials, powerOn }) {
-    const { castVote } = usePresentationSocket("room-123")
+    const { castVote } = usePresentation()
     const resetVote = useVoteStore((s) => s.resetVotes)
     const currentCamera = useCameraStore((state) => state.currentCamera)
     const setCamera = useCameraStore((state) => state.setCamera)

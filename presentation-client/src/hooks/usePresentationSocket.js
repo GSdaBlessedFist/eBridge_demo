@@ -12,6 +12,13 @@ export const usePresentationSocket = (roomId) => {
     const setConfig = useVoteStore((state) => state.setConfig)
 
     useEffect(() => {
+        if (socketRef.current) {
+            console.log("[Socket] already exists, skipping creation")
+            return
+        }
+
+        console.log("[Socket] creating connection")
+
         socketRef.current = io("http://localhost:3001")
 
         socketRef.current.emit("joinPresentation", roomId)
@@ -60,12 +67,14 @@ export const usePresentationSocket = (roomId) => {
         }
         window.addEventListener("keydown", handleKeyDown)
         return () => {
+            console.log("[Socket] cleanup")
             window.removeEventListener("keydown", handleKeyDown)
             socketRef.current.disconnect()
+            socketRef.current = null
         }
 
 
-    }, [roomId])
+    }, [])
 
     // -----------------------------
     // Function to emit votes
