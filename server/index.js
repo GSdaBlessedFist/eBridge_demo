@@ -104,50 +104,7 @@ io.on('connection', (socket) => {
         // // 5. Apply logic based on mode
 
         console.log("isGameMode:", isGameMode)
-        // if (isGameMode) {
-        //     // Game mode: lock when a color reaches threshold
-        //     const THRESHOLD = 5
-        //     if (room.votes[color] >= THRESHOLD) {
-        //         room.winner = color
-        //         io.to(roomId).emit("consensusReached", color)
-        //         console.log("[GAME MODE] Winner reached:", color)
-        //     }
-        // } else {
-        //     // Config modes: STRICT / PERSISTENT / ACTIVE_ONLY
-        //     let votesToCount = { ...room.votes }
 
-        //     if (voteMode === "STRICT") {
-        //         // Only count votes of connected participants
-        //         votesToCount = {}
-        //         for (const [id, c] of Object.entries(room.voters)) {
-        //             if (io.sockets.sockets.get(id)) votesToCount[c] = (votesToCount[c] || 0) + 1
-        //         }
-        //     } else if (voteMode === "ACTIVE_ONLY") {
-        //         for (const [id, c] of Object.entries(room.voters)) {
-        //             if (!io.sockets.sockets.get(id)) continue
-        //             votesToCount[c] = (votesToCount[c] || 0) + 1
-        //         }
-        //     }
-        //     // PERSISTENT counts all votes, no change needed
-
-        //     // -----------------------------
-        //     // Check for consensus in STRICT/PERSISTENT/ACTIVE_ONLY
-        //     // -----------------------------
-        //     const uniqueColors = Object.keys(votesToCount)
-        //     const totalVotes = Object.values(votesToCount).reduce((a, b) => a + b, 0)
-
-        //     if (
-        //         voteMode === "STRICT" &&
-        //         uniqueColors.length === 1 &&
-        //         totalVotes === Object.keys(room.voters).length && // everyone voted
-        //         totalVotes > 1
-        //     ) {
-        //         const winner = uniqueColors[0]
-        //         console.log("[STRICT] Consensus detected:", winner)
-        //         // Only emit event, do NOT lock voting
-        //         io.to(roomId).emit("consensusReached", winner)
-        //     }
-        // }
 
         let votesToCount = { ...room.votes } //04/15
 

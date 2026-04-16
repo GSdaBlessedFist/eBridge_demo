@@ -13,6 +13,6 @@
     }
   ],
   "files.exclude": {
-    "presentation-client": false
+    "audience-client": false
   }
 }
