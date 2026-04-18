@@ -8,6 +8,7 @@ export const useVoteSocket = (roomId) => {
     const socketRef = useRef(null)
     const [voteUpdate, setVoteUpdate] = useState(null)
     const [consensus, setConsensus] = useState(null)
+    const [consensusReset, setConsensusReset] = useState(false)
 
     useEffect(() => {
         if (socketRef.current) return
@@ -23,11 +24,26 @@ export const useVoteSocket = (roomId) => {
             setConsensus(color)
         })
 
+        socketRef.current.on("consensusReset", () => {
+            setConsensus(null)        // clear winner
+            setConsensusReset(true)   // trigger UI reset
+        })
+
         return () => {
             socketRef.current.disconnect()
             socketRef.current = null
         }
     }, [roomId])
+
+    useEffect(() => {
+        if (!consensusReset) return
+
+        const timeout = setTimeout(() => {
+            setConsensusReset(false)
+        }, 0)
+
+        return () => clearTimeout(timeout)
+    }, [consensusReset])
 
     const castVote = (color) => {
         if (!socketRef.current) return
@@ -38,5 +54,5 @@ export const useVoteSocket = (roomId) => {
         })
     }
 
-    return { castVote, voteUpdate, consensus }
+    return { castVote, voteUpdate, consensus, consensusReset }
 }

@@ -33,7 +33,7 @@ io.on('connection', (socket) => {
         // Send initial state if room exists
         const room = getRoom(roomId)
         if (room) {
-            socket.emit('castVote', {
+            socket.emit('voteUpdate', {//<-----castVote
                 votes: room.votes,
                 percentages: calculatePercentages(room),
                 totalVoters: room.totalVoters,

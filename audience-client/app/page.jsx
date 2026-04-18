@@ -5,7 +5,7 @@ import { useEffect, useState } from "react"
 import { useVoteSocket } from "@/src/hooks/useVoteSocket"
 
 export default function VotePage() {
-  const { castVote, voteUpdate, consensus } = useVoteSocket("room-123")
+  const { castVote, voteUpdate, consensus, consensusReset } = useVoteSocket("room-123")
   const [voteStatus, setVoteStatus] = useState(null);
   const [selected, setSelected] = useState(null)
   const [isCoolingDown, setIsCoolingDown] = useState(false)
@@ -59,6 +59,15 @@ export default function VotePage() {
   useEffect(() => {
     console.log(voteUpdate)
   }, [voteUpdate]);
+
+  useEffect(() => {
+    if (!consensusReset) return
+
+    setSelected(null)
+    setVoteStatus(null)
+    setPendingVote(null)
+    setIsCoolingDown(false)
+  }, [consensusReset])
 
   const orderedPercentages = optionsMap.map((opt) => ({
     id: opt.id,
