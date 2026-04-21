@@ -21,11 +21,11 @@ import { useVoteEventBridge } from '@/hooks/useVoteEventBridge'
 import { useConfigStore } from '@/stores/useConfigStore'
 import { emit } from '@/stores/events/eventBus'
 
-export default function Model({ powerOn, setPowerOn, configSlideCompleted, setConfigSlideCompleted }) {
+export default function Model({ powerOn, setPowerOn, configSlideCompleted, setConfigSlideCompleted, bottomPanelOpen, setBottomPanelOpen }) {
   const { updateConfig, resetVotes } = usePresentationSocket("room-123")
   const group = useRef()
   const { scene, nodes, materials, animations } = useGLTF('/models/eBridgeDemo_theThing.glb')
-  const { actions } = useAnimations(animations, group)
+  const { actions, mixer } = useAnimations(animations, group)
   const { play } = useCameraAnimationController(actions)
   const { gl } = useThree()
 
@@ -59,6 +59,8 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
   const currentConfigMode = useConfigStore((state) => state.currentConfigMode)
   const setConfigMode = useConfigStore(state => state.setConfigMode)
 
+  const bottomHiddenPanelButtonRef = useRef();
+  const businessCardRef = useRef();
 
   //Extras
   const [hideMenuStripe, setHideMenuStripe] = useState(true)
@@ -234,6 +236,41 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
   const greenCount = votes.green || 0
   const blueCount = votes.blue || 0
 
+  //BottomHiddenPanel
+  function openBottomPanel() {
+    const bottomHiddenPanelAction = actions['Bottom_Hidden_Action']
+    const businessCardFollowDrawerAction = actions['BusinessCard_followDrawer_Action']
+
+    const playAction = (action, reverse = false) => {
+      if (!action) return
+
+      action.reset()
+      action.clampWhenFinished = true
+      action.setLoop(THREE.LoopOnce, 1)
+
+      action.timeScale = reverse ? -1 : 1
+      action.time = reverse ? action.getClip().duration : 0
+
+      action.play()
+    }
+
+    const shouldReverse = bottomPanelOpen
+
+    playAction(bottomHiddenPanelAction, shouldReverse)
+    playAction(businessCardFollowDrawerAction, shouldReverse)
+
+    setBottomPanelOpen(prev => !prev)
+  }
+
+  function businessCardFlip() {
+    if (!bottomPanelOpen) return;
+    const businessCardFlipAction = actions['BusinessCard_flip_Action'];
+    businessCardFlipAction.reset();
+    businessCardFlipAction.timeScale = .25;
+    businessCardFlipAction.clampWhenFinished = true;
+    businessCardFlipAction.setLoop(THREE.LoopOnce, 1);
+    businessCardFlipAction.play();
+  }
 
 
 
@@ -349,11 +386,19 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
 
   ////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////
+
+  //EventHandlers
   useEffect(() => {
-    if (topHiddenScreenRef.current) {
-      console.log(topHiddenScreenRef.current.position)
-    }
-  }, [])
+    if (!mixer) return
+
+
+
+    // mixer.addEventListener('finished', bottomDrawerOpen_finished)
+
+    // return () => {
+    //   mixer.removeEventListener('finished', bottomDrawerOpen_finished)
+    // }
+  }, [mixer, actions])
 
 
   useEffect(() => {
@@ -442,10 +487,6 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
   })
 
 
-  useEffect(() => {
-    console.log("currentConfigMode: ", currentConfigMode)
-  }, [currentConfigMode]);
-
   return (<>
     <group ref={group} dispose={null}>
       <group name="Scene">
@@ -456,7 +497,7 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
               <group name="mainBody" userData={{ name: 'mainBody' }}>
                 <mesh name="mainBody_1" castShadow receiveShadow geometry={nodes.mainBody_1.geometry} material={materials.mainBody} />
                 <mesh name="mainBody_2" castShadow receiveShadow geometry={nodes.mainBody_2.geometry} material={materials.mainBodyGrooveLights} />
-                <mesh name="mainBody_3" castShadow receiveShadow geometry={nodes.mainBody_3.geometry} material={materials.liveDataLight} />
+                <mesh ref={bottomHiddenPanelButtonRef} name="mainBody_3" castShadow receiveShadow geometry={nodes.mainBody_3.geometry} material={materials.liveDataLight} onClick={() => openBottomPanel()} />
                 <group name="dataPort" userData={{ name: 'dataPort' }}>
                   <mesh name="dataPort_1" castShadow receiveShadow geometry={nodes.dataPort_1.geometry} material={materials.mainBody} />
                   <mesh name="dataPort_2" castShadow receiveShadow geometry={nodes.dataPort_2.geometry} material={materials.dataCable} />
@@ -625,11 +666,13 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
                 </Html>
               )}
             </group>
-            <group name="Bottom_HiddenDrawer" userData={{ name: 'Bottom_HiddenDrawer' }}>
-              <group name="bottomHiddenDrawer_A" userData={{ name: 'bottomHiddenDrawer_A' }}>
-                <mesh name="bottomHiddenDrawer_A_1" castShadow receiveShadow geometry={nodes.bottomHiddenDrawer_A_1.geometry} material={materials.mainBody} />
-                <mesh name="bottomHiddenDrawer_A_2" castShadow receiveShadow geometry={nodes.bottomHiddenDrawer_A_2.geometry} material={materials.bottomHiddenDrawer_inside} />
+            <group name="Bottom_HiddenDrawer">
+              <group name="bottomHiddenDrawer_A">
+                <mesh name="bottomHiddenDrawer_A_1" geometry={nodes.bottomHiddenDrawer_A_1.geometry} material={materials.mainBody} />
+                <mesh name="bottomHiddenDrawer_A_2" geometry={nodes.bottomHiddenDrawer_A_2.geometry} material={materials.dataPort} />
+                <mesh name="bottomHiddenDrawer_A_3" geometry={nodes.bottomHiddenDrawer_A_3.geometry} material={materials.liveDataLight} />
               </group>
+              <mesh ref={businessCardRef} name="businessCard" geometry={nodes.businessCard.geometry} material={nodes.businessCard.material} position={[-0.576, 0.511, 2.202]} rotation={[0, 0.221, 0]} onClick={() => { if (bottomPanelOpen) businessCardFlip() }} />
             </group>
             <group name="Module_DemoButtons" userData={{ name: 'Module_DemoButtons' }}>
               <mesh name="demoButtonsBorder" castShadow receiveShadow geometry={nodes.demoButtonsBorder.geometry} material={materials.socketBlack} userData={{ name: 'demoButtonsBorder' }} />
@@ -788,7 +831,6 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
 
   </>)
 }
-useGLTF.preload('/models/eBridgeDemo_theThing.glb')
 
 /*
 

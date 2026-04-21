@@ -24,6 +24,7 @@ const Page = () => {
   const setCamera = useCameraStore((state) => state.setCamera)
   const [configSlideCompleted, setConfigSlideCompleted] = useState(false);
   const { currentConfigMode, isGameMode } = useConfigStore.getState()
+  const [bottomPanelOpen, setBottomPanelOpen] = useState(false)
 
   useEffect(() => {
     const instanceId = Math.random().toString(36).slice(2, 7)
@@ -50,6 +51,8 @@ const Page = () => {
                 setPowerOn={setPowerOn}
                 configSlideCompleted={configSlideCompleted}
                 setConfigSlideCompleted={setConfigSlideCompleted}
+                bottomPanelOpen={bottomPanelOpen}
+                setBottomPanelOpen={setBottomPanelOpen}
               />
             </Suspense>
             {/* Mount composer AFTER Suspense */}
@@ -63,6 +66,7 @@ const Page = () => {
               setPowerOn(false)
               setCamera("overview")
               setConfigSlideCompleted(false)
+              setBottomPanelOpen(false)
               emit("configChange", {
                 voteMode: "STRICT",
                 gameMode: false
