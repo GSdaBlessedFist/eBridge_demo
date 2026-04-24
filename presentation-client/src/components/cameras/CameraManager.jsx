@@ -1,14 +1,26 @@
-// 2026-03-13 15:05
+// 2026-04-21 16:10
 import { useCameraStore } from '@/stores/useCameraStore'
+import { useVoteStore } from '@/stores/useVoteStore'
+import { useAnimations, useGLTF } from '@react-three/drei'
 import { useThree } from '@react-three/fiber'
 import { useEffect, useMemo, useState } from 'react'
+import * as THREE from 'three'
 
 export default function CameraManager({ triggerFade }) {
     const { scene, set } = useThree()
+    const { animations } = useGLTF('/models/eBridgeDemo_theThing.glb')
+
+    const { actions } = useAnimations(animations, scene)
+
     const currentCameraKey = useCameraStore((state) => state.currentCamera)
+    const playConfigAnimation = useCameraStore((s) => s.playConfigAnimation)
+    const clearConfigAnimation = useCameraStore((s) => s.clearConfigAnimation)
+
     const [hasMounted, setHasMounted] = useState(false)
 
-    // Registry maps friendly keys → Three.js camera names
+    // -----------------------------
+    // 📌 CAMERA REGISTRY
+    // -----------------------------
     const cameraRegistry = useMemo(() => ({
         overview: "_Overview_Camera_1",
         metrics: "_LiveMetrics_Camera_1",
@@ -19,6 +31,53 @@ export default function CameraManager({ triggerFade }) {
         config: "_Config_Camera_1"
     }), [])
 
+    const animateConfigCamera = (cam) => {
+        const start = cam.position.clone()
+
+        const end = new THREE.Vector3(
+            // 0.05188,
+            0,
+            // -3.80567,
+            6,
+            2.55
+        )
+
+        const duration = 6200 // ms
+        const startTime = performance.now()
+
+        const tick = (time) => {
+            const t = Math.min((time - startTime) / duration, 1)
+
+            // smooth easing (nice default)
+            const ease = t * (2 - t)
+
+            cam.position.lerpVectors(start, end, ease)
+
+            if (t < 1) {
+                requestAnimationFrame(tick)
+            }
+        }
+
+        requestAnimationFrame(tick)
+    }
+
+    useEffect(() => {
+        if (!playConfigAnimation) return
+        if (currentCameraKey !== "config") return
+
+        const camName = cameraRegistry["config"]
+        const cam = scene.getObjectByName(camName)
+
+        if (!cam) return
+
+        animateConfigCamera(cam)
+        clearConfigAnimation()
+
+    }, [playConfigAnimation, currentCameraKey, scene])
+
+    // -----------------------------
+    // 📷 CAMERA SWITCHING
+    // -----------------------------
     useEffect(() => {
         if (!currentCameraKey) {
             console.error("🚨 currentCameraKey is invalid:", currentCameraKey)
@@ -33,7 +92,6 @@ export default function CameraManager({ triggerFade }) {
             return
         }
 
-        // Skip fade on first mount
         if (!hasMounted) {
             set({ camera: cam })
             setHasMounted(true)

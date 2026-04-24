@@ -92,13 +92,13 @@ function ConfigUI({ redCount, greenCount, blueCount, mode, tenMode, goal, percen
                                     ? tenPercentage
                                     : normalized;
 
-                                console.log({
-                                    label: option.label,
-                                    tenMode,
-                                    optionCount: option.count,
-                                    normalized,
-                                    filledBars
-                                });
+                                // console.log({
+                                //     label: option.label,
+                                //     tenMode,
+                                //     optionCount: option.count,
+                                //     normalized,
+                                //     filledBars
+                                // });
 
                                 return (
                                     <div key={i} className={styles.resultLabelGroup}>

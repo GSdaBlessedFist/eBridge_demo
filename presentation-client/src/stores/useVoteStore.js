@@ -8,6 +8,7 @@ export const useVoteStore = create((set) => ({
     userVotes: {},
     voteMode: "STRICT",
     gameMode: false,
+    winner: null,
 
     calculatePercentages: () => {
         const { votes, totalVoters } = get()
@@ -60,6 +61,15 @@ export const useVoteStore = create((set) => ({
     resetConsensus: () =>
         set({
             consensusColor: null
+        }),
+
+    setWinner: (color) =>
+        set({
+            winner: color
+        }),
+    resetWinner: () =>
+        set({
+            winner: null
         }),
 
     setConfig: ({ voteMode, gameMode }) =>

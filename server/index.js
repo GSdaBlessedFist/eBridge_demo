@@ -49,7 +49,14 @@ io.on('connection', (socket) => {
         if (!room) return
 
         if (voteMode) room.config.vote = voteMode
-        if (gameMode !== undefined) room.config.isGameMode = gameMode
+        if (gameMode !== undefined) {
+            room.config.isGameMode = gameMode
+
+            // IMPORTANT: switching modes clears previous game result
+            room.winner = null
+
+            io.to(roomId).emit('gameReset')
+        }
 
         console.log(`[Config Updated]`, room.config.vote, room.config.isGameMode)
 
@@ -77,7 +84,7 @@ io.on('connection', (socket) => {
         // 2. Stop voting if game already won
         // -----------------------------
         console.log("[DEBUG] before winner check", room.winner)
-        if (room.winner) {
+        if (room.config.isGameMode && room.winner) {
             console.log("[DEBUG] EXITING due to winner")
             return
         }
@@ -136,11 +143,16 @@ io.on('connection', (socket) => {
             for (const [color, count] of Object.entries(votesToCount)) {
                 if (count >= THRESHOLD) {
                     room.winner = color
-                    io.to(roomId).emit("consensusReached", color)
+                    io.to(roomId).emit("gameWinner", color)
                     console.log("[GAME MODE] Winner reached:", color)
                     break
                 }
             }
+            console.log("ROOM STATE:", {
+                votes: room.votes,
+                voters: room.voters,
+                totalVoters: Object.keys(room.voters).length
+            })
         } else {
             // -----------------------------
             // C. STRICT consensus logic
@@ -221,8 +233,22 @@ io.on('connection', (socket) => {
             percentages: calculatePercentages(room),
             totalVoters: Object.keys(room.voters).length
         })
+        console.log("ROOM STATE:", {
+            votes: room.votes,
+            voters: room.voters,
+            totalVoters: Object.keys(room.voters).length
+        })
 
-        io.to(roomId).emit('consensusReset')
+        io.to(roomId).emit('resetAll')
+    })
+
+    socket.on('resetGame', ({ roomId = "room-123" }) => {
+        const room = getRoom(roomId)
+        if (!room) return
+
+        room.winner = null
+
+        io.to(roomId).emit('gameReset')
     })
 })
 

@@ -24,20 +24,18 @@ import { emit } from '@/stores/events/eventBus'
 export default function Model({ powerOn, setPowerOn, configSlideCompleted, setConfigSlideCompleted, bottomPanelOpen, setBottomPanelOpen }) {
   const { updateConfig, resetVotes } = usePresentationSocket("room-123")
   const group = useRef()
-  const { scene, nodes, materials, animations } = useGLTF('/models/eBridgeDemo_theThing.glb')
+
+  const { scene } = useThree()
+  const set = useThree((state) => state.set)
+
+  const { nodes, materials, animations } = useGLTF('/models/eBridgeDemo_theThing.glb')
   const { actions, mixer } = useAnimations(animations, group)
   const { play } = useCameraAnimationController(actions)
   const { gl } = useThree()
 
   const demoTextsRef = useRef(); // name="DemoTexts"
   const buttonRefs = [useRef(), useRef(), useRef(), useRef()]
-  const configurationModeButtonRef = useRef();
-  const ledRefs = {
-    STRICT: useRef(),
-    PERSISTENT: useRef(),
-    ACTIVE_ONLY: useRef()
-  }
-  const gameModeButtonRef = useRef();
+
 
   const baseYRef = useRef([])
   const phaseRef = useRef([])
@@ -45,24 +43,39 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
   const [selectedButton, setSelectedButton] = useState(null); // null or 0-3
   const setCamera = useCameraStore((state) => state.setCamera)
   const currentCamera = useCameraStore((state) => state.currentCamera)
+  const triggerConfigAnimation = useCameraStore((state) => state.triggerConfigAnimation)
   const [firstClickDone, setFirstClickDone] = useState(false)
   const [assemblyActionProgress, setAssemblyActionProgress] = useState(0);
 
   const votes = useVoteStore((state) => state.votes)
   const percentages = useVoteStore((state) => state.percentages)
+  const consensusColor = useVoteStore((state) => state.consensusColor)
   const isGameMode = useConfigStore((state) => state.isGameMode)
+  const winner = useVoteStore((state) => state.winner)
+  const isUnlocked = !!winner
 
-  //CONFIG section
+  //CONFIG section----------------------------
   const topHiddenScreenRef = useRef()
   const topHiddenDisplayRef = useRef();
   const [configHtmlPos, setConfigHtmlPos] = useState([0, 0, 0]);
   const currentConfigMode = useConfigStore((state) => state.currentConfigMode)
+  const configurationModeButtonRef = useRef();
+  const ledRefs = {
+    STRICT: useRef(),
+    PERSISTENT: useRef(),
+    ACTIVE_ONLY: useRef()
+  }
+  const gameModeButtonRef = useRef();
   const setConfigMode = useConfigStore(state => state.setConfigMode)
 
   const bottomHiddenPanelButtonRef = useRef();
   const businessCardRef = useRef();
+  const businessCardStaticRef = useRef();
+  const [isCardFlipped, setIsCardFlipped] = useState(false)
 
-  //Extras
+  const consensusReachedButtonRef = useRef()
+
+  //Extras----------------------------
   const [hideMenuStripe, setHideMenuStripe] = useState(true)
   const [menuStripeActivated, setMenuStripeActivated] = useState(false);
 
@@ -236,41 +249,49 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
   const greenCount = votes.green || 0
   const blueCount = votes.blue || 0
 
+
+  const playAction = (action, reverse = false, timeScale = 1) => {
+    if (!action) return
+
+    action.reset()
+    action.clampWhenFinished = true
+    action.setLoop(THREE.LoopOnce, 1)
+
+    action.timeScale = reverse ? -timeScale : timeScale
+    action.time = reverse ? action.getClip().duration : 0
+
+    action.play()
+  }
+
   //BottomHiddenPanel
   function openBottomPanel() {
     const bottomHiddenPanelAction = actions['Bottom_Hidden_Action']
     const businessCardFollowDrawerAction = actions['BusinessCard_followDrawer_Action']
+    businessCardRef.current.visible = true;
+    if (!isUnlocked) return
 
-    const playAction = (action, reverse = false) => {
-      if (!action) return
-
-      action.reset()
-      action.clampWhenFinished = true
-      action.setLoop(THREE.LoopOnce, 1)
-
-      action.timeScale = reverse ? -1 : 1
-      action.time = reverse ? action.getClip().duration : 0
-
-      action.play()
-    }
 
     const shouldReverse = bottomPanelOpen
 
-    playAction(bottomHiddenPanelAction, shouldReverse)
-    playAction(businessCardFollowDrawerAction, shouldReverse)
+    playAction(bottomHiddenPanelAction, shouldReverse, 0.281)
+    //playAction(businessCardFollowDrawerAction, shouldReverse, 0.281)
 
     setBottomPanelOpen(prev => !prev)
   }
 
+
   function businessCardFlip() {
     if (!bottomPanelOpen) return;
+    businessCardRef.current.visible = true;
     const businessCardFlipAction = actions['BusinessCard_flip_Action'];
-    businessCardFlipAction.reset();
-    businessCardFlipAction.timeScale = .25;
-    businessCardFlipAction.clampWhenFinished = true;
-    businessCardFlipAction.setLoop(THREE.LoopOnce, 1);
-    businessCardFlipAction.play();
+
+    const shouldReverse = isCardFlipped;
+    playAction(businessCardFlipAction, -shouldReverse, .35)
+    //card FLipped
+    setIsCardFlipped(prev => !prev)
+
   }
+
 
 
 
@@ -344,7 +365,11 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
     menu_pinLightColor,
     menuX, menuY, menuZ,
     liveMetrics_pinLightIntensity,
-    liveMetrics_pinLightColor
+    liveMetrics_pinLightColor,
+    businessCard_pinLightIntensity,
+    businessCardX,
+    businessCardY,
+    businessCardZ
   } = useControls("menuSpotLight", {
     menu_pinLightIntensity: { value: 4, min: 0, max: 10, step: 0.1 },
     menu_pinLightColor: { value: "#cd6aeb" },
@@ -353,6 +378,10 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
     menuZ: { value: -4, min: -6, max: 3, step: 0.1 },
     liveMetrics_pinLightIntensity: { value: 40, min: 0, max: 500, step: 0.1 },
     liveMetrics_pinLightColor: { value: "#90b6ff" },
+    businessCard_pinLightIntensity: { value: 5, min: 0, max: 50, step: 0.1 },
+    businessCardX: { value: 0.456, min: -3, max: 3, step: 0.1 },
+    businessCardY: { value: 3.933, min: -3, max: 6, step: 0.1 },
+    businessCardZ: { value: 2.554, min: -3, max: 5, step: 0.1 },
   })
   const textTransform = useControls('Text Transform', {
     position: {
@@ -400,6 +429,15 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
     // }
   }, [mixer, actions])
 
+  useEffect(() => {
+    if (!consensusReachedButtonRef.current) return
+
+
+    const liveDataMaterial = consensusReachedButtonRef.current.material
+    liveDataMaterial.emissive = consensusColor
+
+    liveDataMaterial.emissiveIntensity = isUnlocked ? 2.5 : 0
+  }, [isUnlocked])
 
   useEffect(() => {
     if (currentCamera !== "demoMenu") {
@@ -468,7 +506,7 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
   // 2026-04-01 10:10
 
 
-  useFrame((state) => {
+  useFrame((state, delta) => {
     const t = state.clock.getElapsedTime()
 
     // Demo texts
@@ -484,9 +522,14 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
     menuStripeActivate(t)
     updateConfigLEDs()
     updateGameModeLED()
+    mixer.update(delta);
   })
 
 
+  useEffect(() => {
+    if (!actions) return;
+    console.log("actions: ", actions)
+  }, [])
   return (<>
     <group ref={group} dispose={null}>
       <group name="Scene">
@@ -497,6 +540,15 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
               <group name="mainBody" userData={{ name: 'mainBody' }}>
                 <mesh name="mainBody_1" castShadow receiveShadow geometry={nodes.mainBody_1.geometry} material={materials.mainBody} />
                 <mesh name="mainBody_2" castShadow receiveShadow geometry={nodes.mainBody_2.geometry} material={materials.mainBodyGrooveLights} />
+                <mesh ref={consensusReachedButtonRef} name="mainBody_consensusReachedButton" geometry={nodes.mainBody_consensusReachedButton.geometry} material={materials.liveDataLight}
+                  onClick={
+                    () => {
+                      if (currentCamera !== "config") return
+                      if (!isUnlocked) return
+
+                      triggerConfigAnimation()
+                    }}
+                />
                 <mesh ref={bottomHiddenPanelButtonRef} name="mainBody_3" castShadow receiveShadow geometry={nodes.mainBody_3.geometry} material={materials.liveDataLight} onClick={() => openBottomPanel()} />
                 <group name="dataPort" userData={{ name: 'dataPort' }}>
                   <mesh name="dataPort_1" castShadow receiveShadow geometry={nodes.dataPort_1.geometry} material={materials.mainBody} />
@@ -525,6 +577,8 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
                       setConfigSlideCompleted(false)
                       // Optionally hide demoTexts
                       if (demoTextsRef.current) demoTextsRef.current.visible = false
+                      setBottomPanelOpen(false)
+
                     }
                   }}
                 >
@@ -671,8 +725,9 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
                 <mesh name="bottomHiddenDrawer_A_1" geometry={nodes.bottomHiddenDrawer_A_1.geometry} material={materials.mainBody} />
                 <mesh name="bottomHiddenDrawer_A_2" geometry={nodes.bottomHiddenDrawer_A_2.geometry} material={materials.dataPort} />
                 <mesh name="bottomHiddenDrawer_A_3" geometry={nodes.bottomHiddenDrawer_A_3.geometry} material={materials.liveDataLight} />
+                <mesh name="bottomHiddenDrawer_A_4" geometry={nodes.bottomHiddenDrawer_A_4.geometry} material={materials.businessCard} />
+                <mesh ref={businessCardRef} name="businessCard" geometry={nodes.businessCard.geometry} material={materials.businessCard} position={[-0.576, 0.53, 1.602]} rotation={[0, 0.221, 0]} visible={false} onClick={() => { if (bottomPanelOpen) businessCardFlip() }} />
               </group>
-              <mesh ref={businessCardRef} name="businessCard" geometry={nodes.businessCard.geometry} material={nodes.businessCard.material} position={[-0.576, 0.511, 2.202]} rotation={[0, 0.221, 0]} onClick={() => { if (bottomPanelOpen) businessCardFlip() }} />
             </group>
             <group name="Module_DemoButtons" userData={{ name: 'Module_DemoButtons' }}>
               <mesh name="demoButtonsBorder" castShadow receiveShadow geometry={nodes.demoButtonsBorder.geometry} material={materials.socketBlack} userData={{ name: 'demoButtonsBorder' }} />
@@ -763,6 +818,7 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
               <group name="liveMetrics_pinLight_Target_EMPTY" position={[1.473, 1.292, -0.348]} userData={{ name: 'liveMetrics_pinLight_Target_EMPTY' }} />
               <pointLight name="menu_pinLight" intensity={menu_pinLightIntensity} decay={2} color={menu_pinLightColor} position={[menuX, menuY, menuZ]} rotation={[-2.722, 0.275, 3.021]} userData={{ name: 'menu_pinLight' }} />
               <pointLight name="liveMetrics_pinLight" intensity={liveMetrics_pinLightIntensity} decay={2} color={liveMetrics_pinLightColor} position={[3.974, 1.672, -0.618]} rotation={[-2.187, 1.387, 2.195]} userData={{ name: 'liveMetrics_pinLight' }} />
+
             </group>
             <group name="BG_Extras" userData={{ name: 'BG_Extras' }}>
               {/* <group ref={underMainBodyCloudPointRef} name="underMainBodyCloud_point" position={[0.4, -1.619, -0.681]} userData={{ name: 'underMainBodyCloud_point' }} >

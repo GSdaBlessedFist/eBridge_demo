@@ -26,6 +26,11 @@ const Page = () => {
   const { currentConfigMode, isGameMode } = useConfigStore.getState()
   const [bottomPanelOpen, setBottomPanelOpen] = useState(false)
 
+  //---------------------------
+  // SPECIAL STATE: Admin = /admin
+  const [isAdmin, setIsAdmin] = useState(true)
+  //---------------------------
+
   useEffect(() => {
     const instanceId = Math.random().toString(36).slice(2, 7)
     console.log(`[Page.jsx] mounted instance: ${instanceId}`)
@@ -71,6 +76,9 @@ const Page = () => {
                 voteMode: "STRICT",
                 gameMode: false
               })
+              if (isAdmin) {
+                emit('resetGame')
+              }
               console.log(currentConfigMode, isGameMode)
             }} />
           )}

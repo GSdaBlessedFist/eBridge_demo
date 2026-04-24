@@ -38,6 +38,11 @@ export const usePresentationSocket = (roomId) => {
             setConsensus(color)
         })
 
+        socketRef.current.on("gameWinner", (color) => {
+            console.log("[Socket] gameWinner:", color)
+            useVoteStore.setState({ winner: color })
+        })
+
         socketRef.current.on("consensusReset", () => {
             //console.log("[Socket] consensusReset")
             resetConsensus()
@@ -46,6 +51,16 @@ export const usePresentationSocket = (roomId) => {
         socketRef.current.on("configUpdated", (config) => {
             console.log("[Socket] configUpdated:", config)
             setConfig(config)
+        })
+
+        socketRef.current.on("resetAll", () => {
+            resetConsensus()
+            useVoteStore.setState({
+                winner: null,
+                votes: {},
+                percentages: {},
+                totalVoters: 0
+            })
         })
 
         // 2026-03-02 00:45
@@ -61,7 +76,7 @@ export const usePresentationSocket = (roomId) => {
 
             if (keyBuffer === "reset") {
                 console.log("Reset sequence detected")
-                socketRef.current.emit("resetVotes", { roomId })
+                socketRef.current.emit("resetAll", { roomId })
                 keyBuffer = ""
             }
         }
