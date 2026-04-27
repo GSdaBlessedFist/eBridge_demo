@@ -58,6 +58,7 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
   const topHiddenScreenRef = useRef()
   const topHiddenDisplayRef = useRef();
   const [configHtmlPos, setConfigHtmlPos] = useState([0, 0, 0]);
+  const [playReverse, setPlayReverse] = useState(false)
   const currentConfigMode = useConfigStore((state) => state.currentConfigMode)
   const configurationModeButtonRef = useRef();
   const ledRefs = {
@@ -244,7 +245,7 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
   }
 
   //Config UI
-  const goal = 5
+  const goal = 3
   const redCount = votes.red || 0
   const greenCount = votes.green || 0
   const blueCount = votes.blue || 0
@@ -430,6 +431,16 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
   }, [mixer, actions])
 
   useEffect(() => {
+    if (!playReverse) return;
+    const top = actions['Config_Top_Action'];
+    const bottom = actions['Bottom_Hidden_Action']
+
+    if (top.time !== 0) playAction(top, true, 1)
+    if (bottom.time !== 0) playAction(bottom, true, 1)
+
+  }, [playReverse]);
+
+  useEffect(() => {
     if (!consensusReachedButtonRef.current) return
 
 
@@ -579,6 +590,7 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
                       if (demoTextsRef.current) demoTextsRef.current.visible = false
                       setBottomPanelOpen(false)
 
+                      setPlayReverse(true)
                     }
                   }}
                 >

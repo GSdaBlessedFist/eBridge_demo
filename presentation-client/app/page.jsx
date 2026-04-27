@@ -21,10 +21,13 @@ const Page = () => {
   const [triggerFade, setTriggerFade] = useState(null)
   const [showInfoPortal, setShowInfoPortal] = useState(false)
   const [powerOn, setPowerOn] = useState(false)
-  const setCamera = useCameraStore((state) => state.setCamera)
   const [configSlideCompleted, setConfigSlideCompleted] = useState(false);
   const { currentConfigMode, isGameMode } = useConfigStore.getState()
   const [bottomPanelOpen, setBottomPanelOpen] = useState(false)
+  const setCamera = useCameraStore((state) => state.setCamera)
+  const triggerResetConfigAnimation = useCameraStore(
+    (state) => state.triggerResetConfigAnimation
+  )
 
   //---------------------------
   // SPECIAL STATE: Admin = /admin
@@ -69,7 +72,6 @@ const Page = () => {
             <PowerUI powerOn={powerOn} onClick={() => {
               console.log("UI power button pressed")
               setPowerOn(false)
-              setCamera("overview")
               setConfigSlideCompleted(false)
               setBottomPanelOpen(false)
               emit("configChange", {
@@ -79,6 +81,8 @@ const Page = () => {
               if (isAdmin) {
                 emit('resetGame')
               }
+              triggerResetConfigAnimation()
+              setCamera("overview")
               console.log(currentConfigMode, isGameMode)
             }} />
           )}

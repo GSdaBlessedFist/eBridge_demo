@@ -138,7 +138,7 @@ io.on('connection', (socket) => {
         // B. Apply GAME MODE (Race)
         // -----------------------------
         if (isGameMode) {
-            const THRESHOLD = 5
+            const THRESHOLD = 3
 
             for (const [color, count] of Object.entries(votesToCount)) {
                 if (count >= THRESHOLD) {
