@@ -13,30 +13,22 @@ import CameraRig from './cameras/CameraRig'
 import CameraManager from './cameras/CameraManager'
 import CameraFadePortal from './cameras/CameraFadePortal'
 import { useCameraStore } from '@/stores/useCameraStore'
-import PowerUI from './PowerUI'
 import { useVoteStore } from '@/stores/useVoteStore'
 import ConfigUI from './ConfigUI'
 import colorMap from './colorMap'
-import { useVoteEventBridge } from '@/hooks/useVoteEventBridge'
 import { useConfigStore } from '@/stores/useConfigStore'
-import { emit } from '@/stores/events/eventBus'
-
-export default function Model({ powerOn, setPowerOn, configSlideCompleted, setConfigSlideCompleted, bottomPanelOpen, setBottomPanelOpen }) {
+import { emit, on } from '@/stores/events/eventBus'
+export default function Model({ powerOn, setPowerOn, configPanelState, setConfigPanelState, bottomPanelOpen, setBottomPanelOpen }) {
   const { updateConfig, resetVotes } = usePresentationSocket("room-123")
   const group = useRef()
-
   const { scene } = useThree()
   const set = useThree((state) => state.set)
-
   const { nodes, materials, animations } = useGLTF('/models/eBridgeDemo_theThing.glb')
   const { actions, mixer } = useAnimations(animations, group)
   const { play } = useCameraAnimationController(actions)
   const { gl } = useThree()
-
   const demoTextsRef = useRef(); // name="DemoTexts"
   const buttonRefs = [useRef(), useRef(), useRef(), useRef()]
-
-
   const baseYRef = useRef([])
   const phaseRef = useRef([])
   const [hoveredIndex, setHoveredIndex] = useState(null)
@@ -46,15 +38,50 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
   const triggerConfigAnimation = useCameraStore((state) => state.triggerConfigAnimation)
   const [firstClickDone, setFirstClickDone] = useState(false)
   const [assemblyActionProgress, setAssemblyActionProgress] = useState(0);
-
   const votes = useVoteStore((state) => state.votes)
   const percentages = useVoteStore((state) => state.percentages)
   const consensusColor = useVoteStore((state) => state.consensusColor)
   const isGameMode = useConfigStore((state) => state.isGameMode)
   const winner = useVoteStore((state) => state.winner)
   const isUnlocked = !!winner
-
+  //LIVE METRICS section
+  function handleGoto_LiveMetrics() {
+    setCamera("metrics")
+    setTimeout(() => {
+      liveMetricsBGRef.current.visible = true;
+    }, 500)
+  }
   //CONFIG section----------------------------
+  // 2026-05-03 12:24
+  function handleGoto_Config() {
+    console.log("🔥 handleGoto_Config fired")
+    // 🛑 GUARD: only allow opening from "closed"
+    if (configPanelState !== "closed") {
+      console.log("⛔ blocked — panel not closed:", configPanelState)
+      return
+    }
+    setCamera("config")
+    setTimeout(() => {
+      const action = actions['Config_Top_Action']
+      if (!action) return
+      const mixer = action.getMixer()
+      setConfigPanelState("opening")
+      action.reset()
+      action.time = 0
+      action.timeScale = 1
+      action.clampWhenFinished = true
+      action.setLoop(THREE.LoopOnce, 1)
+      const handleFinished = (e) => {
+        if (e.action === action) {
+          console.log("✅ panel fully opened")
+          setConfigPanelState("open")
+          mixer.removeEventListener('finished', handleFinished)
+        }
+      }
+      mixer.addEventListener('finished', handleFinished)
+      action.play()
+    }, 2250)
+  }
   const topHiddenScreenRef = useRef()
   const topHiddenDisplayRef = useRef();
   const [configHtmlPos, setConfigHtmlPos] = useState([0, 0, 0]);
@@ -68,27 +95,35 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
   }
   const gameModeButtonRef = useRef();
   const setConfigMode = useConfigStore(state => state.setConfigMode)
-
   const bottomHiddenPanelButtonRef = useRef();
   const businessCardRef = useRef();
   const businessCardStaticRef = useRef();
   const [isCardFlipped, setIsCardFlipped] = useState(false)
-
   const consensusReachedButtonRef = useRef()
-
   //Extras----------------------------
   const [hideMenuStripe, setHideMenuStripe] = useState(true)
   const [menuStripeActivated, setMenuStripeActivated] = useState(false);
-
   const menuBGStripeRef = useRef();
   const liveMetricsBGRef = useRef();
   const underMainBodyCloudPointRef = useRef();
-
   //--------------------------------------------------------
+  function handlePowerOn() {
+    setPowerOn(true)
+    emit("POWER_ON")
+  }
+  function handleReturn() {
+    setConfigPanelState("closing")
+    emit("RETURN")
+    emit("CONFIG_PANEL_CLOSE_REQUEST")
+  }
+  function handlePowerOff() {
+    setPowerOn(false)
+    emit("POWER_OFF")
+    //emit("CONFIG_PANEL_CLOSED")
+  }
   function menuStripeActivate(t) {
     if (!menuStripeActivated) return
     if (!powerOn) setMenuStripeActivated(false)
-
     if (currentCamera === 'demoMenu' && menuStripeActivated) {
       menuBGStripeRef.current.material.opacity = THREE.MathUtils.lerp(
         menuBGStripeRef.current.material.opacity ?? 0,
@@ -98,7 +133,6 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
       menuBGStripeRef.current.position.x += Math.sin(t * 1.5) * .005;
     }
   }
-
   // 2026-04-01 10:05
   function updateDemoTexts({
     t,
@@ -112,12 +146,9 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
   }) {
     const demoTexts = demoTextsRef.current?.children
     if (!demoTexts || demoTexts.length === 0) return
-
     const targetOpacity = powerOn && currentCamera === "demoMenu" ? 1 : 0
-
     demoTexts.forEach((text, i) => {
       if (!text.material) return
-
       // Fade
       text.material.transparent = true
       text.material.opacity = THREE.MathUtils.lerp(
@@ -125,23 +156,19 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
         targetOpacity,
         0.2
       )
-
       // Vertical oscillation
       if (baseYRef.current[i] !== undefined) {
         text.position.y =
           baseYRef.current[i] +
           Math.sin(t * 2 + phaseRef.current[i]) * 0.025
       }
-
       // Hover glow
       if (!text.material.emissive) text.material.emissive = new THREE.Color(0xffffff)
       if (text.material.emissiveIntensity === undefined) text.material.emissiveIntensity = 1
-
       const glowTarget = hoveredIndex === i ? 17 : 1
       text.material.emissiveIntensity =
         THREE.MathUtils.lerp(text.material.emissiveIntensity, glowTarget, 0.1)
     })
-
     // Button glow
     buttonRefs.forEach((ref, i) => {
       if (!ref.current) return
@@ -150,56 +177,48 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
         THREE.MathUtils.lerp(ref.current.material.emissiveIntensity, glowTarget, 0.1)
     })
   }
-
   function updatePowerButtonGlow(t, materials) {
     materials.powerButton.emissiveIntensity = 1 + Math.sin(t * 2) * 0.35
   }
-
   function updateSystemLights(intensity, materials) {
     const i = intensity.get()
     materials.mainBodyGrooveLights.emissiveIntensity = i
     materials.liveDataLight.emissiveIntensity = i
   }
-
   function handleShutdown() {
     console.log("System shutting down")
     setPowerOn(false)
     setCamera("_Overview_Camera_1")
   }
-
+  //ASSEMBLY section
+  function handleGoto_Assembly() {
+    setCamera("assembly");
+  }
   // 2026-04-01 10:15
   function enterAssembly(action, progress) {
     const duration = action.getClip().duration
-
     action.timeScale = 1
     action.reset()
     action.setLoop(THREE.LoopOnce, 1)
     action.clampWhenFinished = true
-
     action.paused = false
     action.play()
     action.paused = true
-
     // scrub to progress
     action.time = progress * duration
   }
-
   function exitAssembly(action) {
     const duration = action.getClip().duration
-
     action.paused = true
     action.timeScale = -1
     action.setLoop(THREE.LoopOnce, 1)
     action.clampWhenFinished = true
-
     if (action.time === 0) action.time = duration
-
     action.paused = false
     action.play()
   }
-  //Configuration functions
   function handleModeCycle() {
-    emit({ type: 'CONFIG_MODE_CYCLE' })
+    emit('CONFIG_MODE_CYCLE')
     console.log("[Socket 187] Emitted configChange:", currentConfigMode)
     console.log("[Socket 188] Emitted configChange:", isGameMode)
     updateConfig({
@@ -207,22 +226,19 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
       gameMode: isGameMode // toggle game mode
     })
   }
-
   function handleGameMode() {
     const nextGameMode = !isGameMode
-    emit({ type: "CONFIG_GAME_MODE" })
+    emit("CONFIG_GAME_MODE")
     updateConfig({
       currentConfigMode: nextGameMode === true ? "STRICT" : currentConfigMode,             // keep current voteMode
       gameMode: nextGameMode // toggle game mode
     })
     resetVotes("room-123")
   }
-
   function updateConfigLEDs() {
     Object.keys(ledRefs).forEach((mode) => {
       const mesh = ledRefs[mode].current
       if (!mesh) return
-
       if (isGameMode === true) {
         if (mode === "STRICT") {
           mesh.material.emissiveIntensity = 3
@@ -233,86 +249,66 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
         mesh.material.emissiveIntensity =
           currentConfigMode === mode ? 3 : 0
       }
-
     })
   }
-
   function updateGameModeLED() {
     if (!gameModeButtonRef.current) return;
     gameModeButtonRef.current.material.emissiveIntensity =
       isGameMode ? 3 : 0
-
   }
-
   //Config UI
   const goal = 3
   const redCount = votes.red || 0
   const greenCount = votes.green || 0
   const blueCount = votes.blue || 0
-
-
   const playAction = (action, reverse = false, timeScale = 1) => {
     if (!action) return
-
     action.reset()
     action.clampWhenFinished = true
     action.setLoop(THREE.LoopOnce, 1)
-
     action.timeScale = reverse ? -timeScale : timeScale
     action.time = reverse ? action.getClip().duration : 0
-
     action.play()
   }
-
   //BottomHiddenPanel
   function openBottomPanel() {
     const bottomHiddenPanelAction = actions['Bottom_Hidden_Action']
     const businessCardFollowDrawerAction = actions['BusinessCard_followDrawer_Action']
     businessCardRef.current.visible = true;
     if (!isUnlocked) return
-
-
     const shouldReverse = bottomPanelOpen
-
     playAction(bottomHiddenPanelAction, shouldReverse, 0.281)
     //playAction(businessCardFollowDrawerAction, shouldReverse, 0.281)
-
     setBottomPanelOpen(prev => !prev)
   }
-
-
   function businessCardFlip() {
     if (!bottomPanelOpen) return;
     businessCardRef.current.visible = true;
     const businessCardFlipAction = actions['BusinessCard_flip_Action'];
-
     const shouldReverse = isCardFlipped;
     playAction(businessCardFlipAction, -shouldReverse, .35)
     //card FLipped
     setIsCardFlipped(prev => !prev)
-
   }
-
-
-
-
+  //SCALE section
+  function handleGoto_Scale() {
+    setCamera('scale')
+    emit("CONFIG_PANEL_CLOSED")
+  }
   //Setup functions
   // 2026-04-01 10:20
   function setupTextMaterials(demoTextsRef, powerOn) {
     const demoTexts = demoTextsRef.current?.children
     if (!demoTexts) return
-
     demoTexts.forEach((text) => {
       text.material.transparent = true
       text.material.opacity = powerOn ? 1 : 0
     })
   }
-
   function setupInitialEmissives(materials) {
     materials.mainBodyGrooveLights.emissiveIntensity = 1
     materials.liveDataLight.emissiveIntensity = 1
   }
-
   function setupAnisotropy(materials, gl) {
     const mats = [
       materials.live_metrics,
@@ -320,7 +316,6 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
       materials.configuration,
       materials.scale
     ]
-
     mats.forEach(mat => {
       if (mat.map) {
         mat.map.anisotropy = gl.capabilities.getMaxAnisotropy()
@@ -329,7 +324,6 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
         mat.map.needsUpdate = true
       }
     })
-
     const powerButtonMat = materials.powerButton
     if (powerButtonMat.map) {
       powerButtonMat.map.anisotropy = gl.capabilities.getMaxAnisotropy()
@@ -338,7 +332,6 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
       powerButtonMat.map.needsUpdate = true
     }
   }
-
   function setupLEDMaterials(ledRefs) {
     Object.keys(ledRefs).forEach((mode) => {
       const mesh = ledRefs[mode].current
@@ -349,7 +342,6 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
       }
     })
   }
-
   ////////////////////////////////////////////////////////////
   //////////////////////////SPRINGS////////////////////////////
   const { intensity } = useSpring({
@@ -360,7 +352,6 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
   })
   ////////////////////////////////////////////////////////////
   ///////////////////////LEVA////////////////////////////////
-
   const {
     menu_pinLightIntensity,
     menu_pinLightColor,
@@ -412,87 +403,75 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
     panelZ: { value: -2.5, min: -5, max: 5, step: .001 },
     factor: { value: .4, min: -0.25, max: 3, step: .001 }
   })
-
-
   ////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////
-
+  useEffect(() => {
+    if (!actions) return
+    Object.values(actions).forEach((action) => {
+      const mixer = action.getMixer()
+      mixer.stopAllAction()
+      mixer.setTime(0)
+      action.reset()
+      action.paused = true
+      action.enabled = false
+    })
+    console.log("🧊 All animations frozen at load")
+  }, [actions])
   //EventHandlers
   useEffect(() => {
     if (!mixer) return
-
-
-
     // mixer.addEventListener('finished', bottomDrawerOpen_finished)
-
     // return () => {
     //   mixer.removeEventListener('finished', bottomDrawerOpen_finished)
     // }
   }, [mixer, actions])
-
   useEffect(() => {
     if (!playReverse) return;
     const top = actions['Config_Top_Action'];
     const bottom = actions['Bottom_Hidden_Action']
-
     if (top.time !== 0) playAction(top, true, 1)
     if (bottom.time !== 0) playAction(bottom, true, 1)
-
   }, [playReverse]);
-
   useEffect(() => {
     if (!consensusReachedButtonRef.current) return
-
-
     const liveDataMaterial = consensusReachedButtonRef.current.material
     liveDataMaterial.emissive = consensusColor
-
     liveDataMaterial.emissiveIntensity = isUnlocked ? 2.5 : 0
   }, [isUnlocked])
-
   useEffect(() => {
     if (currentCamera !== "demoMenu") {
       menuBGStripeRef.current.material.opacity = 0
     }
   }, [currentCamera]);
-
   //Assembly Animation
   useEffect(() => {
     if (!actions) return
-
     const action = actions['Assembly_Action']
     if (!action) return
-
     if (currentCamera === 'assembly') {
       enterAssembly(action, assemblyActionProgress)
     } else if (action.time > 0) {
       exitAssembly(action)
     }
   }, [actions, currentCamera, assemblyActionProgress])
-
   useEffect(() => {
     if (currentCamera !== "metrics") {
       liveMetricsBGRef.current.visible = false
     }
   }, [currentCamera]);
-
   //Setup functions
   useEffect(() => {
     setupTextMaterials(demoTextsRef, powerOn)
   }, [])
-
   useEffect(() => {
     setupInitialEmissives(materials)
   }, [materials])
-
   useEffect(() => {
     setupAnisotropy(materials, gl)
   }, [materials, gl])
-
   useEffect(() => {
     setupLEDMaterials(ledRefs)
   }, [ledRefs]);
-
   useLayoutEffect(() => {
     if (!demoTextsRef.current) return
     const PHASE = -0.6
@@ -502,45 +481,67 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
     // console.log("Stored baseY:", baseYRef.current)
     // console.log("Stored phases:", phaseRef.current)
   }, [])
-
   //SUBSCRIPTIONS
   useEffect(() => {
     // Subscribe to store updates
     const unsubscribe = useConfigStore.subscribe(() => updateConfigLEDs())
-
     // Cleanup subscription on unmount
     return () => unsubscribe()
   }, [])
   //////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////
-
-  // 2026-04-01 10:10
-
-
+  //EVENTS
+  useEffect(() => {
+    const off = on((event) => {
+      console.log("👂 EVENT RECEIVED:", event)
+      if (event.type === "POWER_OFF") {
+        setConfigPanelState("closed")
+      }
+      if (event.type === "CONFIG_PANEL_OPENED") {
+        setConfigPanelState("open")
+      }
+      if (event.type === "CONFIG_PANEL_CLOSED") {
+        setConfigPanelState("closed")
+      }
+      if (event.type === "RETURN") {
+        const action = actions['Config_Top_Action']
+        if (!action) return
+        const mixer = action.getMixer()
+        // 🧠 STATE → closing
+        setConfigPanelState("closing")
+        // 🎬 reverse animation
+        action.reset()
+        action.timeScale = -1
+        action.time = action.getClip().duration
+        action.clampWhenFinished = true
+        action.setLoop(THREE.LoopOnce, 1)
+        const handleFinished = (e) => {
+          if (e.action === action) {
+            console.log("🔁 panel fully closed")
+            setConfigPanelState("closed")
+            mixer.removeEventListener('finished', handleFinished)
+          }
+        }
+        mixer.addEventListener('finished', handleFinished)
+        action.play()
+      }
+    })
+    return off
+  }, [actions])
   useFrame((state, delta) => {
     const t = state.clock.getElapsedTime()
-
     // Demo texts
     updateDemoTexts({
       t, demoTextsRef, buttonRefs, baseYRef, phaseRef,
       hoveredIndex, powerOn, currentCamera
     })
-
     updatePowerButtonGlow(t, materials)
-
     updateSystemLights(intensity, materials)
-
     menuStripeActivate(t)
     updateConfigLEDs()
     updateGameModeLED()
     mixer.update(delta);
   })
-
-
-  useEffect(() => {
-    if (!actions) return;
-    console.log("actions: ", actions)
-  }, [])
   return (<>
     <group ref={group} dispose={null}>
       <group name="Scene">
@@ -556,7 +557,6 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
                     () => {
                       if (currentCamera !== "config") return
                       if (!isUnlocked) return
-
                       triggerConfigAnimation()
                     }}
                 />
@@ -568,37 +568,11 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
               </group>
               <mesh name="powerButtonBorder" castShadow receiveShadow geometry={nodes.powerButtonBorder.geometry} material={materials.buttonBorder} userData={{ name: 'powerButtonBorder' }}>
                 <mesh name="powerButton" geometry={nodes.powerButton.geometry} material={materials.powerButton} morphTargetDictionary={nodes.powerButton.morphTargetDictionary} morphTargetInfluences={nodes.powerButton.morphTargetInfluences} userData={{ targetNames: ['Key 1'], name: 'powerButton' }}
-                  onClick={() => {
-                    if (!powerOn) {
-                      // First click / powerOn sequence
-                      setPowerOn(true)
-
-                      setTimeout(() => {
-                        setCamera("demoMenu")           // move camera
-                      }, 500)
-                      setTimeout(() => {
-                        setMenuStripeActivated(prev => !prev) // start menu stripe animation
-                        setFirstClickDone(true)
-                      }, 1500)
-                    } else {
-                      // Power is on -> turning off
-                      setPowerOn(false)
-                      setCamera("overview")
-                      setFirstClickDone(false)
-                      setConfigSlideCompleted(false)
-                      // Optionally hide demoTexts
-                      if (demoTextsRef.current) demoTextsRef.current.visible = false
-                      setBottomPanelOpen(false)
-
-                      setPlayReverse(true)
-                    }
-                  }}
-                >
+                  onClick={() => (!powerOn) ? handlePowerOn() : handlePowerOff()}>
                   {currentCamera === "assembly" && (
                     <Html position={[.012, 3.9, 1.1]}>
                       {(() => {
                         const opacity = getStepOpacity(assemblyActionProgress, 0.55, 0.65)
-
                         return (
                           <div
                             style={{
@@ -626,7 +600,7 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
                 <mesh name="mainScreenPort_A_2" castShadow receiveShadow geometry={nodes.mainScreenPort_A_2.geometry} material={materials.socketBlack} />
                 <mesh name="mainScreenIOLights" castShadow receiveShadow geometry={nodes.mainScreenIOLights.geometry} material={materials.mainScreenIOLights} position={[-0.215, 0.957, -0.133]} rotation={[-Math.PI, 0, 0]} scale={[-0.033, -1, -0.127]} userData={{ name: 'mainScreenIOLights' }} />
               </group>
-              <mesh name="returnToMenu_liveMetrics" castShadow receiveShadow geometry={nodes.returnToMenu_liveMetrics.geometry} material={materials.returnToMenuLights} userData={{ name: 'returnToMenu_liveMetrics' }} onClick={() => setCamera("demoMenu")} />
+              <mesh name="returnToMenu_liveMetrics" castShadow receiveShadow geometry={nodes.returnToMenu_liveMetrics.geometry} material={materials.returnToMenuLights} userData={{ name: 'returnToMenu_liveMetrics' }} onClick={() => handleReturn()} />//func to EMIT HERE
               <group name="modeSelectorButton" userData={{ name: 'modeSelectorButton' }}>
                 <mesh name="modeSelectorButton_1" castShadow receiveShadow geometry={nodes.modeSelectorButton_1.geometry} material={materials.buttonBlack} onClick={(e) => { e.stopPropagation(); handleGameMode() }} />
                 <mesh ref={gameModeButtonRef} name="modeSelectorButton_2" castShadow receiveShadow geometry={nodes.modeSelectorButton_2.geometry} >
@@ -653,7 +627,7 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
                 <mesh name="topHiddenPanel_A_3" castShadow receiveShadow geometry={nodes.topHiddenPanel_A_3.geometry} material={materials.mainBodyGrooveLights} />
                 <mesh ref={topHiddenScreenRef} name="topHidden_screen" castShadow receiveShadow geometry={nodes.topHidden_screen.geometry} position={[0, 0, 1.079]} userData={{ name: 'topHidden_screen' }} >
                   <meshStandardMaterial transparent opacity={0.61} roughness={.015} metalness={.91} side={THREE.DoubleSide} />
-                  {configSlideCompleted && (
+                  {configPanelState === "open" && currentCamera === "config" && (
                     <Html
                       transform
                       occlude={false}
@@ -670,7 +644,6 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
                         tenMode={isGameMode}
                         percentages={percentages}
                       />
-
                     </Html>
                   )}
                 </mesh>
@@ -688,7 +661,6 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
                 <Html position={[2.7, 0.4, -0.5]}>
                   {(() => {
                     const opacity = getStepOpacity(assemblyActionProgress, 0.95, 1.0)
-
                     return (
                       <div
                         style={{
@@ -714,7 +686,6 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
                 <Html position={[3.0, -0.2, 1.1]}>
                   {(() => {
                     const opacity = getStepOpacity(assemblyActionProgress, 0.85, 0.9)
-
                     return (
                       <div
                         style={{
@@ -751,7 +722,6 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
                 <Html position={[-3.0, .2, 1]}>
                   {(() => {
                     const opacity = getStepOpacity(assemblyActionProgress, 0.25, 0.36)
-
                     return (
                       <div
                         style={{
@@ -773,50 +743,21 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
               <mesh name="demoText_live_metrics" geometry={nodes.demoText_live_metrics.geometry} castShadow material={materials.live_metrics}
                 onPointerOver={() => setHoveredIndex(0)}
                 onPointerOut={() => setHoveredIndex(null)}
-                onClick={() => {
-                  setCamera("metrics")
-                  setTimeout(() => {
-                    liveMetricsBGRef.current.visible = true;
-                  }, 500)
-                }}
+                onClick={() => handleGoto_LiveMetrics()}
               />
               <mesh name="demoText_assembly" geometry={nodes.demoText_assembly.geometry} material={materials.assembly}
                 onPointerOver={() => setHoveredIndex(1)}
                 onPointerOut={() => setHoveredIndex(null)}
-                onClick={() => {
-                  setCamera("assembly")
-                }}
+                onClick={() => handleGoto_Assembly()}
               />
               <mesh name="demoText_configuration" geometry={nodes.demoText_configuration.geometry} material={materials.configuration}
                 onPointerOver={() => setHoveredIndex(2)}
                 onPointerOut={() => setHoveredIndex(null)}
-                onClick={() => {
-                  setCamera("config")
-                  const configAction = actions['Config_Top_Action'];
-                  setTimeout(() => {
-                    if (!actions) return;
-                    configAction.reset();
-                    configAction.clampWhenFinished = true;
-                    configAction.setLoop(THREE.LoopOnce, 1);
-                    configAction.play();
-
-                    // Listen for when it finishes
-
-                  }, 2250)
-                  configAction.getMixer().addEventListener('finished', (e) => {
-                    if (e.action === configAction) {
-                      setConfigSlideCompleted(true);
-                    }
-                  });
-
-                }}
-              />
+                onClick={() => { handleGoto_Config() }} />
               <mesh name="demoText_scale" geometry={nodes.demoText_scale.geometry} material={materials.scale}
                 onPointerOver={() => setHoveredIndex(3)}
                 onPointerOut={() => setHoveredIndex(null)}
-                onClick={() => {
-                  setCamera("scale")
-                }}
+                onClick={() => handleGoto_Scale()}
               />
             </group>
             {currentCamera === 'metrics' &&
@@ -830,7 +771,6 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
               <group name="liveMetrics_pinLight_Target_EMPTY" position={[1.473, 1.292, -0.348]} userData={{ name: 'liveMetrics_pinLight_Target_EMPTY' }} />
               <pointLight name="menu_pinLight" intensity={menu_pinLightIntensity} decay={2} color={menu_pinLightColor} position={[menuX, menuY, menuZ]} rotation={[-2.722, 0.275, 3.021]} userData={{ name: 'menu_pinLight' }} />
               <pointLight name="liveMetrics_pinLight" intensity={liveMetrics_pinLightIntensity} decay={2} color={liveMetrics_pinLightColor} position={[3.974, 1.672, -0.618]} rotation={[-2.187, 1.387, 2.195]} userData={{ name: 'liveMetrics_pinLight' }} />
-
             </group>
             <group name="BG_Extras" userData={{ name: 'BG_Extras' }}>
               {/* <group ref={underMainBodyCloudPointRef} name="underMainBodyCloud_point" position={[0.4, -1.619, -0.681]} userData={{ name: 'underMainBodyCloud_point' }} >
@@ -855,7 +795,7 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
                     textTransform.rotation.z
                   ]}
                   scale={textTransform.scale}>
-                  {Object.entries(percentages).map(([key, value], i) => (
+                  {Object.entries(percentages).reverse().map(([key, value], i) => (
                     <Text key={key} position={[0, i * textLayout.spacing, textLayout.depthOffset]}
                       fontSize={textLayout.fontSize}
                       font="/fonts/Audiowide-Regular.ttf"
@@ -879,7 +819,7 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
       </group>
       {currentCamera === "assembly" && (
         <Html distanceFactor={10} position={[-0.9, 0, 2.6]}>
-          <div className='m-auto w-48 flex justify-between'>
+          <div className='relative right-11 border w-48 flex justify-between'>
             <input type="range" min={0} max={1} step={0.01} value={assemblyActionProgress} onChange={(e) => setAssemblyActionProgress(parseFloat(e.target.value))} />
             <button onClick={() => {
               setCamera('demoMenu')
@@ -892,15 +832,10 @@ export default function Model({ powerOn, setPowerOn, configSlideCompleted, setCo
               </div>
             </button>
           </div>
-
         </Html>
       )}
     </group >
-
   </>)
 }
-
 /*
-
 */
-

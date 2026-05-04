@@ -14,5 +14,11 @@
   ],
   "files.exclude": {
     "presentation-client": false
-  }
+  },
+  "highlightSettings.customColors": [
+    "rgba(255,0,0,.35)",
+    "rgba(0,250,5,.5)",
+    "rgba(0,0,255,.35)",
+    "rgba(155,250,0,.35)"
+  ]
 }

@@ -6,7 +6,7 @@ import ConfigUI from "@/components/ConfigUI";
 import Model from "@/components/EBridgeDemo_theThing";
 import InfoPortal from "@/components/InfoPortal";
 import PostProcessing from "@/components/PostProcessing";
-import PowerUI from "@/components/PowerUI";
+import ReturnUI from "@/components/ReturnUI";
 import { PresentationProvider } from "@/context/PresentationContext";
 import { emit } from "@/stores/events/eventBus";
 import { useCameraStore } from "@/stores/useCameraStore";
@@ -21,7 +21,7 @@ const Page = () => {
   const [triggerFade, setTriggerFade] = useState(null)
   const [showInfoPortal, setShowInfoPortal] = useState(false)
   const [powerOn, setPowerOn] = useState(false)
-  const [configSlideCompleted, setConfigSlideCompleted] = useState(false);
+  const [configPanelState, setConfigPanelState] = useState("closed")
   const { currentConfigMode, isGameMode } = useConfigStore.getState()
   const [bottomPanelOpen, setBottomPanelOpen] = useState(false)
   const setCamera = useCameraStore((state) => state.setCamera)
@@ -43,6 +43,15 @@ const Page = () => {
     }
   }, [])
 
+  function returnToMenu() {
+    console.log("UI power button pressed")
+
+    setConfigPanelState("closed")
+    setBottomPanelOpen(false)
+    emit("RETURN")
+    emit("CONFIG_PANEL_CLOSED")
+  }
+
   return (
     <PresentationProvider roomId="room-123">
       <>
@@ -57,8 +66,8 @@ const Page = () => {
               <directionalLight position={[0, 0, 5]} intensity={1} />
               <Model powerOn={powerOn}
                 setPowerOn={setPowerOn}
-                configSlideCompleted={configSlideCompleted}
-                setConfigSlideCompleted={setConfigSlideCompleted}
+                configPanelState={configPanelState}
+                setConfigPanelState={setConfigPanelState}
                 bottomPanelOpen={bottomPanelOpen}
                 setBottomPanelOpen={setBottomPanelOpen}
               />
@@ -69,22 +78,8 @@ const Page = () => {
             <PostProcessing />
           </Canvas>
           {powerOn && (
-            <PowerUI powerOn={powerOn} onClick={() => {
-              console.log("UI power button pressed")
-              setPowerOn(false)
-              setConfigSlideCompleted(false)
-              setBottomPanelOpen(false)
-              emit("configChange", {
-                voteMode: "STRICT",
-                gameMode: false
-              })
-              if (isAdmin) {
-                emit('resetGame')
-              }
-              triggerResetConfigAnimation()
-              setCamera("overview")
-              console.log(currentConfigMode, isGameMode)
-            }} />
+            //<ReturnUI setPowerOn={setPowerOn} powerOn={powerOn} onClick={() => returnToMenu()} />
+            <ReturnUI setPowerOn={setPowerOn} powerOn={powerOn} />
           )}
           <CameraFadePortal onReady={(fade) => setTriggerFade(() => fade)} />
           {showInfoPortal && (

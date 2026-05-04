@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react"
 import { io } from "socket.io-client"
 import { useVoteStore } from "../stores/useVoteStore"
+import { on } from "@/stores/events/eventBus"
 
 
 export const usePresentationSocket = (roomId) => {
@@ -90,6 +91,38 @@ export const usePresentationSocket = (roomId) => {
 
 
     }, [])
+
+    // 2026-04-29 19:10
+    useEffect(() => {
+        const off = on((event) => {
+            if (!socketRef.current) return
+
+            // 🔴 FULL RESET
+            if (event.type === "POWER_OFF") {
+                console.log("[Socket] POWER_OFF received")
+
+                socketRef.current.emit("configChange", {
+                    roomId,
+                    voteMode: "STRICT",
+                    gameMode: false
+                })
+
+                // if (event.payload?.isAdmin) {
+                //     socketRef.current.emit("resetGame", { roomId })
+                // }
+
+                socketRef.current.emit("resetVotes", { roomId })
+            }
+
+            // 🟡 RETURN (no server reset)
+            if (event.type === "RETURN") {
+                console.log("[Socket] RETURN received (no-op)")
+                // intentionally do nothing
+            }
+        })
+
+        return off
+    }, [roomId])
 
     // -----------------------------
     // Function to emit votes

@@ -25,10 +25,10 @@ export const useVoteStore = create((set) => ({
         set({ percentages })
     },
     setVoteState: (payload) => {
-        console.log("[STORE] setVoteState called with:", payload)
+        //console.log("[STORE] setVoteState called with:", payload)
 
         set((state) => {
-            console.log("[STORE] BEFORE:", state)
+            //console.log("[STORE] BEFORE:", state)
 
             const newState = {
                 ...state,
@@ -47,7 +47,7 @@ export const useVoteStore = create((set) => ({
                 blue: (newState.votes.blue || 0) / (newState.totalVoters || 1) * 100
             }
 
-            console.log("[STORE] AFTER:", newState)
+            //console.log("[STORE] AFTER:", newState)
 
             return newState
         })
