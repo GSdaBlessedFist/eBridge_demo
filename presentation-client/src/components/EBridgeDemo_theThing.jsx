@@ -112,14 +112,14 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
     emit("POWER_ON")
   }
   function handleReturn() {
-    setConfigPanelState("closing")
     emit("RETURN")
-    emit("CONFIG_PANEL_CLOSE_REQUEST")
+    setPowerOn(true)
+    //emit("CONFIG_PANEL_CLOSED")
   }
   function handlePowerOff() {
     setPowerOn(false)
     emit("POWER_OFF")
-    //emit("CONFIG_PANEL_CLOSED")
+
   }
   function menuStripeActivate(t) {
     if (!menuStripeActivated) return
@@ -501,6 +501,9 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
       if (event.type === "CONFIG_PANEL_OPENED") {
         setConfigPanelState("open")
       }
+      if (event.type === "CONFIG_PANEL_CLOSE_REQUEST") {
+        setConfigPanelState("closing")
+      }
       if (event.type === "CONFIG_PANEL_CLOSED") {
         setConfigPanelState("closed")
       }
@@ -514,33 +517,36 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
         // 🧠 STATE → closing
         setConfigPanelState("closing")
         // 🎬 reverse animation
-        topAction.reset()
-        bottomPanelAction.reset()
-        topAction.timeScale = -1
-        bottomPanelAction.timeScale = -1
-        topAction.time = topAction.getClip().duration
-        bottomPanelAction.time = bottomPanelAction.getClip().duration
-        topAction.clampWhenFinished = true
-        bottomPanelAction.clampWhenFinished = true
-        topAction.setLoop(THREE.LoopOnce, 1)
-        bottomPanelAction.setLoop(THREE.LoopOnce, 1)
-        let finishedCount = 0
-        const handleFinished = (e) => {
-          if (e.action === topAction || e.action === bottomPanelAction) {
-            finishedCount++
-            if (finishedCount === 2) {
-              console.log("🔁 panel fully closed")
-              setConfigPanelState("closed")
-              setBottomPanelOpen(false)
-              topMixer.removeEventListener('finished', handleFinished)
+        if (configPanelState === "closed") {
+          topAction.reset()
+          bottomPanelAction.reset()
+          topAction.timeScale = -1
+          bottomPanelAction.timeScale = -1
+          topAction.time = topAction.getClip().duration
+          bottomPanelAction.time = bottomPanelAction.getClip().duration
+          topAction.clampWhenFinished = true
+          bottomPanelAction.clampWhenFinished = true
+          topAction.setLoop(THREE.LoopOnce, 1)
+          bottomPanelAction.setLoop(THREE.LoopOnce, 1)
+          setConfigPanelState("closed")
+          let finishedCount = 0
+          const handleFinished = (e) => {
+            if (e.action === topAction || e.action === bottomPanelAction) {
+              finishedCount++
+              if (finishedCount === 2) {
+                console.log("🔁 panel fully closed")
+                setBottomPanelOpen(false)
+                topMixer.removeEventListener('finished', handleFinished)
+              }
             }
           }
+          if (bottomMixer !== topMixer) {
+            bottomMixer.addEventListener('finished', handleFinished)
+          }
+          topAction.play()
+          bottomPanelAction.play()
         }
-        if (bottomMixer !== topMixer) {
-          bottomMixer.addEventListener('finished', handleFinished)
-        }
-        topAction.play()
-        bottomPanelAction.play()
+
       }
     })
     return off
@@ -617,7 +623,7 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
                 <mesh name="mainScreenPort_A_2" castShadow receiveShadow geometry={nodes.mainScreenPort_A_2.geometry} material={materials.socketBlack} />
                 <mesh name="mainScreenIOLights" castShadow receiveShadow geometry={nodes.mainScreenIOLights.geometry} material={materials.mainScreenIOLights} position={[-0.215, 0.957, -0.133]} rotation={[-Math.PI, 0, 0]} scale={[-0.033, -1, -0.127]} userData={{ name: 'mainScreenIOLights' }} />
               </group>
-              <mesh name="returnToMenu_liveMetrics" castShadow receiveShadow geometry={nodes.returnToMenu_liveMetrics.geometry} material={materials.returnToMenuLights} userData={{ name: 'returnToMenu_liveMetrics' }} onClick={() => handleReturn()} />//func to EMIT HERE
+              <mesh name="returnToMenu_liveMetrics" castShadow receiveShadow geometry={nodes.returnToMenu_liveMetrics.geometry} material={materials.returnToMenuLights} userData={{ name: 'returnToMenu_liveMetrics' }} onClick={() => handleReturn()} />
               <group name="modeSelectorButton" userData={{ name: 'modeSelectorButton' }}>
                 <mesh name="modeSelectorButton_1" castShadow receiveShadow geometry={nodes.modeSelectorButton_1.geometry} material={materials.buttonBlack} onClick={(e) => { e.stopPropagation(); handleGameMode() }} />
                 <mesh ref={gameModeButtonRef} name="modeSelectorButton_2" castShadow receiveShadow geometry={nodes.modeSelectorButton_2.geometry} >
