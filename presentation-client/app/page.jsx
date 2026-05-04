@@ -24,6 +24,7 @@ const Page = () => {
   const [configPanelState, setConfigPanelState] = useState("closed")
   const { currentConfigMode, isGameMode } = useConfigStore.getState()
   const [bottomPanelOpen, setBottomPanelOpen] = useState(false)
+  const currentCamera = useCameraStore((state) => state.currentCamera)
   const setCamera = useCameraStore((state) => state.setCamera)
   const triggerResetConfigAnimation = useCameraStore(
     (state) => state.triggerResetConfigAnimation
@@ -45,11 +46,16 @@ const Page = () => {
 
   function returnToMenu() {
     console.log("UI power button pressed")
+    if (currentCamera === "demoMenu") {
+      emit("POWER_OFF")
+    }
+    if (currentCamera !== "demoMenu") {
+      emit("RETURN")
+    }
 
-    setConfigPanelState("closed")
-    setBottomPanelOpen(false)
-    emit("RETURN")
-    emit("CONFIG_PANEL_CLOSED")
+
+
+    //emit("CONFIG_PANEL_CLOSED")
   }
 
   return (
@@ -78,8 +84,7 @@ const Page = () => {
             <PostProcessing />
           </Canvas>
           {powerOn && (
-            //<ReturnUI setPowerOn={setPowerOn} powerOn={powerOn} onClick={() => returnToMenu()} />
-            <ReturnUI setPowerOn={setPowerOn} powerOn={powerOn} />
+            <ReturnUI setPowerOn={setPowerOn} powerOn={powerOn} onClick={() => returnToMenu()} />
           )}
           <CameraFadePortal onReady={(fade) => setTriggerFade(() => fade)} />
           {showInfoPortal && (

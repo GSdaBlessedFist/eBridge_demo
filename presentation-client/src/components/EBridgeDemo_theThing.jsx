@@ -496,6 +496,7 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
       console.log("👂 EVENT RECEIVED:", event)
       if (event.type === "POWER_OFF") {
         setConfigPanelState("closed")
+        setPowerOn(false)
       }
       if (event.type === "CONFIG_PANEL_OPENED") {
         setConfigPanelState("open")
@@ -504,26 +505,42 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
         setConfigPanelState("closed")
       }
       if (event.type === "RETURN") {
-        const action = actions['Config_Top_Action']
-        if (!action) return
-        const mixer = action.getMixer()
+        const topAction = actions['Config_Top_Action']
+        const bottomPanelAction = actions['Bottom_Hidden_Action']
+        if (!topAction) return
+        if (!bottomPanelAction) return
+        const topMixer = topAction.getMixer()
+        const bottomMixer = bottomPanelAction.getMixer()
         // 🧠 STATE → closing
         setConfigPanelState("closing")
         // 🎬 reverse animation
-        action.reset()
-        action.timeScale = -1
-        action.time = action.getClip().duration
-        action.clampWhenFinished = true
-        action.setLoop(THREE.LoopOnce, 1)
+        topAction.reset()
+        bottomPanelAction.reset()
+        topAction.timeScale = -1
+        bottomPanelAction.timeScale = -1
+        topAction.time = topAction.getClip().duration
+        bottomPanelAction.time = bottomPanelAction.getClip().duration
+        topAction.clampWhenFinished = true
+        bottomPanelAction.clampWhenFinished = true
+        topAction.setLoop(THREE.LoopOnce, 1)
+        bottomPanelAction.setLoop(THREE.LoopOnce, 1)
+        let finishedCount = 0
         const handleFinished = (e) => {
-          if (e.action === action) {
-            console.log("🔁 panel fully closed")
-            setConfigPanelState("closed")
-            mixer.removeEventListener('finished', handleFinished)
+          if (e.action === topAction || e.action === bottomPanelAction) {
+            finishedCount++
+            if (finishedCount === 2) {
+              console.log("🔁 panel fully closed")
+              setConfigPanelState("closed")
+              setBottomPanelOpen(false)
+              topMixer.removeEventListener('finished', handleFinished)
+            }
           }
         }
-        mixer.addEventListener('finished', handleFinished)
-        action.play()
+        if (bottomMixer !== topMixer) {
+          bottomMixer.addEventListener('finished', handleFinished)
+        }
+        topAction.play()
+        bottomPanelAction.play()
       }
     })
     return off

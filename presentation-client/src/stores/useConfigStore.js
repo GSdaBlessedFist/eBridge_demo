@@ -30,15 +30,19 @@ on((event) => {
             }
         })
     }
-})
-
-on((event) => {
     if (event.type === "CONFIG_GAME_MODE") {
         useConfigStore.setState((state) => {
             console.log('GameMode toggled:', !state.isGameMode)
             return {
                 isGameMode: !state.isGameMode
             }
+        })
+    }
+    if (event.type === "POWER_OFF") {
+        console.log("🔌 POWER_OFF → resetting game mode")
+
+        useConfigStore.setState({
+            isGameMode: false
         })
     }
 })
