@@ -510,6 +510,10 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
       if (event.type === "RETURN") {
         const topAction = actions['Config_Top_Action']
         const bottomPanelAction = actions['Bottom_Hidden_Action']
+        const businessCardFlipAction = actions['BusinessCard_flip_Action'];
+        //const shouldReverse = isCardFlipped;
+        playAction(businessCardFlipAction, true, .35)
+
         if (!topAction) return
         if (!bottomPanelAction) return
         const topMixer = topAction.getMixer()
@@ -844,10 +848,7 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
         <Html distanceFactor={10} position={[-0.9, 0, 2.6]}>
           <div className='relative right-11 border w-48 flex justify-between'>
             <input type="range" min={0} max={1} step={0.01} value={assemblyActionProgress} onChange={(e) => setAssemblyActionProgress(parseFloat(e.target.value))} />
-            <button onClick={() => {
-              setCamera('demoMenu')
-              setPowerOn(true)
-            }}>
+            <button onClick={() => handleReturn()}>
               <div className="w-8 flex flex-col itemborder">
                 <div className="w-7 bg-white h-1 mb-0.5"></div>
                 <div className="w-7 bg-white h-1 mb-0.5"></div>
