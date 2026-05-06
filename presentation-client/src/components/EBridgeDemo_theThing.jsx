@@ -6,7 +6,7 @@ import * as THREE from "three"
 import LiveMetrics from './LiveMetrics'
 import { getStepOpacity } from '@/utils/animationHelpers'
 import VoteButtons from './VoteButtons'
-import { usePresentationSocket } from '@/hooks/usePresentationSocket'
+import { usePresentation } from '@/context/PresentationContext'
 import { useControls } from 'leva'
 import { useCameraAnimationController } from '@/hooks/useCameraAnimationController'
 import CameraRig from './cameras/CameraRig'
@@ -19,7 +19,7 @@ import colorMap from './colorMap'
 import { useConfigStore } from '@/stores/useConfigStore'
 import { emit, on } from '@/stores/events/eventBus'
 export default function Model({ powerOn, setPowerOn, configPanelState, setConfigPanelState, bottomPanelOpen, setBottomPanelOpen }) {
-  const { updateConfig, resetVotes } = usePresentationSocket("room-123")
+  const { emitUpdateConfig, resetVotes } = usePresentation()
   const group = useRef()
   const { scene } = useThree()
   const set = useThree((state) => state.set)
@@ -221,7 +221,7 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
     emit('CONFIG_MODE_CYCLE')
     console.log("[Socket 187] Emitted configChange:", currentConfigMode)
     console.log("[Socket 188] Emitted configChange:", isGameMode)
-    updateConfig({
+    emitUpdateConfig({
       currentConfigMode: isGameMode ? "STRICT" : currentConfigMode,             // keep current voteMode
       gameMode: isGameMode // toggle game mode
     })
@@ -229,7 +229,7 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
   function handleGameMode() {
     const nextGameMode = !isGameMode
     emit("CONFIG_GAME_MODE")
-    updateConfig({
+    emitUpdateConfig({
       currentConfigMode: nextGameMode === true ? "STRICT" : currentConfigMode,             // keep current voteMode
       gameMode: nextGameMode // toggle game mode
     })

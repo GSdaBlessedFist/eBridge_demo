@@ -3,7 +3,6 @@
 import { useCallback, useRef } from 'react'
 import { useVoteStore } from '../stores/useVoteStore'
 import { useFrame } from '@react-three/fiber'
-import { usePresentationSocket } from '@/hooks/usePresentationSocket'
 import { useVoteAnimationController } from '@/hooks/useVoteAnimationController'
 import { useCameraStore } from '@/stores/useCameraStore'
 import colorMap from './colorMap'

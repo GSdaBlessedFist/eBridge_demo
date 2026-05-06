@@ -205,9 +205,19 @@ io.on('connection', (socket) => {
 
         console.log('[BEFORE REMOVE]', room.voters)
 
-        removeVoter(roomId, socket.id)
+        //removeVoter(roomId, socket.id)
+        const voteMode = room.config.vote
 
-        console.log('[AFTER REMOVE]', room.voters)
+        if (voteMode === "ACTIVE_ONLY") {
+            removeVoter(roomId, socket.id)
+        }
+
+
+        console.log("[AFTER REMOVE] ROOM STATE:", {
+            votes: room.votes,
+            voters: room.voters,
+            totalVoters: Object.keys(room.voters).length
+        })
 
         io.to(roomId).emit('voteUpdate', {
             votes: room.votes,
@@ -225,7 +235,7 @@ io.on('connection', (socket) => {
     })
 
     // 2026-03-02 00:18
-    socket.on('resetVotes', ({ roomId }) => {
+    socket.on('resetVotes', ({ roomId = "room-123" }) => {
         const room = resetVotes(roomId)
 
         io.to(roomId).emit('voteUpdate', {
@@ -249,6 +259,19 @@ io.on('connection', (socket) => {
         room.winner = null
 
         io.to(roomId).emit('gameReset')
+    })
+    socket.on("resetAll", ({ roomId = "room-123" }) => {
+        const room = getRoom(roomId)
+        if (!room) return
+
+        console.log("[Server] resetAll triggered")
+
+        // Clear everything
+        room.votes = {}
+        room.voters = {}
+        room.winner = null
+
+        io.to(roomId).emit("resetAll")
     })
 })
 
