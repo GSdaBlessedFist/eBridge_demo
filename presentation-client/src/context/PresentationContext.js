@@ -195,13 +195,13 @@ export const PresentationProvider = ({ children, roomId }) => {
     }
 
     // 🔥 REPLACEMENT FOR ALL OLD CONFIG EMITS
-    const emitUpdateConfig = ({ voteMode, gameMode }) => {
+    const emitUpdateConfig = (config) => {
         socketRef.current?.emit("configChange", {
             roomId,
-            voteMode,
-            gameMode
-        })
-    }
+            voteMode: config.currentConfigMode ?? config.voteMode,
+            isGameMode: config.gameMode ?? config.isGameMode
+        });
+    };
 
     const resetAll = () => {
         socketRef.current?.emit("resetAll", { roomId })

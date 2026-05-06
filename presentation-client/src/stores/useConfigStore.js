@@ -1,10 +1,10 @@
 import { create } from "zustand";
 import { on } from "./events/eventBus";
 
-const modes = ['STRICT', 'PERSISTENT', 'ACTIVE_ONLY']
+const modes = ['ACTIVE_ONLY', 'PERSISTENT']
 
 export const useConfigStore = create((set) => ({
-    currentConfigMode: "STRICT",
+    currentConfigMode: "ACTIVE_ONLY",
     setConfigMode: (configMode) => {
         set({
             currentConfigMode: configMode
@@ -42,6 +42,7 @@ on((event) => {
         console.log("🔌 POWER_OFF → resetting game mode")
 
         useConfigStore.setState({
+            currentConfigMode: "ACTIVE_ONLY",
             isGameMode: false
         })
     }

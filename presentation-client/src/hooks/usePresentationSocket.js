@@ -110,7 +110,7 @@
 
 //                 // socketRef.current.emit("configChange", {
 //                 //     roomId,
-//                 //     voteMode: "STRICT",
+//                 //     voteMode: "ACTIVE_ONLY",
 //                 //     gameMode: false
 //                 // })
 //                 //emitUpdateConfig

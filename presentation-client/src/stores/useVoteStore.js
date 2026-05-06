@@ -6,7 +6,7 @@ export const useVoteStore = create((set) => ({
     totalVoters: 0,
     consensusColor: null,
     userVotes: {},
-    voteMode: "STRICT",
+    voteMode: "ACTIVE_ONLY",
     gameMode: false,
     winner: null,
 
@@ -76,7 +76,7 @@ export const useVoteStore = create((set) => ({
         set((state) => ({
             // voteMode: voteMode ?? state.voteMode,
             // gameMode: gameMode ?? state.gameMode
-            voteMode: "STRICT",
+            voteMode: "ACTIVE_ONLY",
             gameMode: false,
         }))
 }))

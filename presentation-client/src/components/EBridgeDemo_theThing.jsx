@@ -89,9 +89,8 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
   const currentConfigMode = useConfigStore((state) => state.currentConfigMode)
   const configurationModeButtonRef = useRef();
   const ledRefs = {
-    STRICT: useRef(),
-    PERSISTENT: useRef(),
-    ACTIVE_ONLY: useRef()
+    ACTIVE_ONLY: useRef(),
+    PERSISTENT: useRef()
   }
   const gameModeButtonRef = useRef();
   const setConfigMode = useConfigStore(state => state.setConfigMode)
@@ -222,7 +221,7 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
     console.log("[Socket 187] Emitted configChange:", currentConfigMode)
     console.log("[Socket 188] Emitted configChange:", isGameMode)
     emitUpdateConfig({
-      currentConfigMode: isGameMode ? "STRICT" : currentConfigMode,             // keep current voteMode
+      currentConfigMode: isGameMode ? "ACTIVE_ONLY" : currentConfigMode,             // keep current voteMode
       gameMode: isGameMode // toggle game mode
     })
   }
@@ -230,7 +229,7 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
     const nextGameMode = !isGameMode
     emit("CONFIG_GAME_MODE")
     emitUpdateConfig({
-      currentConfigMode: nextGameMode === true ? "STRICT" : currentConfigMode,             // keep current voteMode
+      currentConfigMode: nextGameMode === true ? "ACTIVE_ONLY" : currentConfigMode,             // keep current voteMode
       gameMode: nextGameMode // toggle game mode
     })
     resetVotes("room-123")
@@ -240,7 +239,7 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
       const mesh = ledRefs[mode].current
       if (!mesh) return
       if (isGameMode === true) {
-        if (mode === "STRICT") {
+        if (mode === "ACTIVE_ONLY") {
           mesh.material.emissiveIntensity = 3
         } else {
           mesh.material.emissiveIntensity = 0
@@ -555,6 +554,15 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
     })
     return off
   }, [actions])
+  useEffect(() => {
+    console.log("📡 Syncing config → socket:", currentConfigMode, isGameMode);
+
+    emitUpdateConfig({
+      currentConfigMode,
+      isGameMode
+    });
+
+  }, [currentConfigMode, isGameMode, emitUpdateConfig]);
   useFrame((state, delta) => {
     const t = state.clock.getElapsedTime()
     // Demo texts
@@ -637,13 +645,11 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
               <group name="configurationModeButton" position={[-0.736, 0, 0.208]} userData={{ name: 'configurationModeButton' }}>
                 <mesh ref={configurationModeButtonRef} name="configurationModeButton_1" castShadow receiveShadow geometry={nodes.configurationModeButton_1.geometry} material={materials.buttonBlack} onClick={(e) => { e.stopPropagation(); handleModeCycle() }} />
                 <mesh name="configurationModeButton_2" castShadow receiveShadow geometry={nodes.configurationModeButton_2.geometry} material={materials.decal_blue} />
-                <mesh name="configurationDecal_ActiveOnly" castShadow receiveShadow geometry={nodes.configurationDecal_ActiveOnly.geometry} material={nodes.configurationDecal_ActiveOnly.material} position={[1.394, 0.965, -1.888]} userData={{ name: 'configurationDecal_ActiveOnly' }} />
-                <mesh name="configurationDecal_Persistent" castShadow receiveShadow geometry={nodes.configurationDecal_Persistent.geometry} material={nodes.configurationDecal_Persistent.material} position={[1.251, 0.965, -1.888]} userData={{ name: 'configurationDecal_Persistent' }} />
-                <mesh name="configurationDecal_Strict" castShadow receiveShadow geometry={nodes.configurationDecal_Strict.geometry} material={nodes.configurationDecal_Strict.material} position={[1.109, 0.965, -1.886]} userData={{ name: 'configurationDecal_Strict' }} />
-                <mesh name="configurationModeSelectorBase" castShadow receiveShadow geometry={nodes.configurationModeSelectorBase.geometry} material={materials.mainBody} position={[0.736, 0, -0.208]} userData={{ name: 'configurationModeSelectorBase' }}>
-                  <mesh ref={ledRefs.ACTIVE_ONLY} name="configurationModeLED_ACTIVE" castShadow receiveShadow geometry={nodes.configurationModeLED_ACTIVE.geometry} material={materials.configurationModeLED} userData={{ name: 'configurationModeLED_ACTIVE' }} />
-                  <mesh ref={ledRefs.PERSISTENT} name="configurationModeLED_PERSISTENT" castShadow receiveShadow geometry={nodes.configurationModeLED_PERSISTENT.geometry} material={materials.configurationModeLED} userData={{ name: 'configurationModeLED_PERSISTENT' }} />
-                  <mesh ref={ledRefs.STRICT} name="configurationModeLED_STRICT" castShadow receiveShadow geometry={nodes.configurationModeLED_STRICT.geometry} material={materials.configurationModeLED} userData={{ name: 'configurationModeLED_STRICT' }} />
+                <mesh name="configurationDecal_ActiveOnly" castShadow receiveShadow geometry={nodes.configurationDecal_ActiveOnly.geometry} material={nodes.configurationDecal_ActiveOnly.material} position={[1.18, 0.961, -1.888]} userData={{ name: 'configurationDecal_ActiveOnly' }} />
+                <mesh name="configurationDecal_Persistent" castShadow receiveShadow geometry={nodes.configurationDecal_Persistent.geometry} material={nodes.configurationDecal_Persistent.material} position={[1.322, 0.961, -1.888]} userData={{ name: 'configurationDecal_Persistent' }} />
+                <mesh name="configurationModeSelectorBase" geometry={nodes.configurationModeSelectorBase.geometry} material={materials.mainBody} position={[1.251, 0.952, -1.794]} userData={{ name: 'configurationModeSelectorBase' }}>
+                  <mesh ref={ledRefs.ACTIVE_ONLY} name="configurationModeLED_ACTIVE_ONLY" geometry={nodes.configurationModeLED_ACTIVE_ONLY.geometry} material={materials.configurationModeLED} position={[-0.071, 0.011, -0.009]} userData={{ name: 'configurationModeLED_ACTIVE_ONLY' }} />
+                  <mesh ref={ledRefs.PERSISTENT} name="configurationModeLED_PERSISTENT" geometry={nodes.configurationModeLED_PERSISTENT.geometry} material={materials.configurationModeLED} position={[-0.587, -0.952, 1.586]} userData={{ name: 'configurationModeLED_PERSISTENT' }} />
                 </mesh>
               </group>
             </group>

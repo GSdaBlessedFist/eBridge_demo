@@ -46,7 +46,7 @@ export default function Model(props) {
             <PerspectiveCamera name="_PowerButton_Camera_1" makeDefault={false} far={1000} near={0.1} fov={22.895} position={[2.617, 1.936, 2.996]} rotation={[-0.706, 0.659, 0.481]} userData={{ name: '_PowerButton_Camera' }} />
             <PerspectiveCamera name="_Overview_Camera_1" makeDefault={false} far={1000} near={0.1} fov={22.895} position={[1.45, 6.075, 8.08]} rotation={[-0.62, 0.164, 0.116]} userData={{ name: '_Overview_Camera' }} />
             <PerspectiveCamera name="_Assembly_Camera_1" makeDefault={false} far={1000} near={0.1} fov={39.761} position={[0, 9.925, 0]} rotation={[-Math.PI / 2, 0, 0]} userData={{ name: '_Assembly_Camera' }} />
-            <PerspectiveCamera name="_Config_Camera_1" makeDefault={false} far={1000} near={0.1} fov={22.895} position={[0.052, 3.164, 3.806]} rotation={[-1.011, 0.185, 0.286]} userData={{ name: '_Config_Camera' }} />
+            <PerspectiveCamera name="_Config_Camera_1" makeDefault={false} far={1000} near={0.1} fov={22.895} position={[0.052, 3.402, 3.656]} rotation={[-1.04, 0.167, 0.275]} userData={{ name: '_Config_Camera' }} />
           </group>
           <group name="THE_THING" userData={{ name: 'THE_THING' }}>
             <group name="Module_MainBody" userData={{ name: 'Module_MainBody' }}>
@@ -78,13 +78,11 @@ export default function Model(props) {
               <group name="configurationModeButton" position={[-0.736, 0, 0.208]} userData={{ name: 'configurationModeButton' }}>
                 <mesh name="configurationModeButton_1" geometry={nodes.configurationModeButton_1.geometry} material={materials.buttonBlack} />
                 <mesh name="configurationModeButton_2" geometry={nodes.configurationModeButton_2.geometry} material={materials.decal_blue} />
-                <mesh name="configurationDecal_ActiveOnly" geometry={nodes.configurationDecal_ActiveOnly.geometry} material={nodes.configurationDecal_ActiveOnly.material} position={[1.394, 0.961, -1.888]} userData={{ name: 'configurationDecal_ActiveOnly' }} />
-                <mesh name="configurationDecal_Persistent" geometry={nodes.configurationDecal_Persistent.geometry} material={nodes.configurationDecal_Persistent.material} position={[1.251, 0.961, -1.888]} userData={{ name: 'configurationDecal_Persistent' }} />
-                <mesh name="configurationDecal_Strict" geometry={nodes.configurationDecal_Strict.geometry} material={nodes.configurationDecal_Strict.material} position={[1.109, 0.961, -1.886]} userData={{ name: 'configurationDecal_Strict' }} />
-                <mesh name="configurationModeSelectorBase" geometry={nodes.configurationModeSelectorBase.geometry} material={materials.mainBody} position={[0.736, 0, -0.208]} userData={{ name: 'configurationModeSelectorBase' }}>
-                  <mesh name="configurationModeLED_ACTIVE" geometry={nodes.configurationModeLED_ACTIVE.geometry} material={materials.configurationModeLED} userData={{ name: 'configurationModeLED_ACTIVE' }} />
-                  <mesh name="configurationModeLED_PERSISTENT" geometry={nodes.configurationModeLED_PERSISTENT.geometry} material={materials.configurationModeLED} userData={{ name: 'configurationModeLED_PERSISTENT' }} />
-                  <mesh name="configurationModeLED_STRICT" geometry={nodes.configurationModeLED_STRICT.geometry} material={materials.configurationModeLED} userData={{ name: 'configurationModeLED_STRICT' }} />
+                <mesh name="configurationDecal_ActiveOnly" geometry={nodes.configurationDecal_ActiveOnly.geometry} material={nodes.configurationDecal_ActiveOnly.material} position={[1.18, 0.961, -1.888]} userData={{ name: 'configurationDecal_ActiveOnly' }} />
+                <mesh name="configurationDecal_Persistent" geometry={nodes.configurationDecal_Persistent.geometry} material={nodes.configurationDecal_Persistent.material} position={[1.322, 0.961, -1.888]} userData={{ name: 'configurationDecal_Persistent' }} />
+                <mesh name="configurationModeSelectorBase" geometry={nodes.configurationModeSelectorBase.geometry} material={materials.mainBody} position={[1.251, 0.952, -1.794]} userData={{ name: 'configurationModeSelectorBase' }}>
+                  <mesh name="configurationModeLED_ACTIVE_ONLY" geometry={nodes.configurationModeLED_ACTIVE_ONLY.geometry} material={materials.configurationModeLED} position={[-0.071, 0.011, -0.009]} userData={{ name: 'configurationModeLED_ACTIVE_ONLY' }} />
+                  <mesh name="configurationModeLED_PERSISTENT" geometry={nodes.configurationModeLED_PERSISTENT.geometry} material={materials.configurationModeLED} position={[-0.587, -0.952, 1.586]} userData={{ name: 'configurationModeLED_PERSISTENT' }} />
                 </mesh>
               </group>
               <mesh name="mainBody_consensusReachedButton" geometry={nodes.mainBody_consensusReachedButton.geometry} material={materials.liveDataLight} userData={{ name: 'mainBody_consensusReachedButton' }} />
@@ -151,6 +149,7 @@ export default function Model(props) {
           <group name="Lights" userData={{ name: 'Lights' }}>
             <group name="menu_pinLight_Target_EMPTY" position={[-1.375, 0.616, -0.04]} userData={{ name: 'menu_pinLight_Target_EMPTY' }} />
             <group name="liveMetrics_pinLight_Target_EMPTY" position={[1.473, 1.292, -0.348]} userData={{ name: 'liveMetrics_pinLight_Target_EMPTY' }} />
+            <group name="Empty" position={[0.444, 0.936, -1.595]} userData={{ name: 'Empty' }} />
             <pointLight name="menu_pinLight" intensity={81398.1} decay={2} position={[-0.658, 1.65, -2.358]} rotation={[-2.722, 0.275, 3.021]} userData={{ name: 'menu_pinLight' }} />
             <pointLight name="liveMetrics_pinLight" intensity={26452.83} decay={2} position={[3.974, 1.672, -0.618]} rotation={[-2.187, 1.387, 2.195]} userData={{ name: 'liveMetrics_pinLight' }} />
             <pointLight name="assembly_pinLight_fill" intensity={2608.868} decay={2} position={[3.869, 3.788, -2.446]} rotation={[-Math.PI / 2, 0, 0]} userData={{ name: 'assembly_pinLight_fill' }} />

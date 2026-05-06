@@ -8,7 +8,7 @@ function createRoom(roomId) {
             votes: {},
             voters: {},
             config: {
-                vote: "STRICT",
+                vote: "ACTIVE_ONLY",
                 isGameMode: false
             },
             winner: null

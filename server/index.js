@@ -30,6 +30,7 @@ io.on('connection', (socket) => {
         socket.join(roomId)
         console.log(`${socket.id} joined room ${roomId}`)
 
+
         // Send initial state if room exists
         const room = getRoom(roomId)
         if (room) {
@@ -105,7 +106,7 @@ io.on('connection', (socket) => {
         // -----------------------------
         // 4. Read config
         // -----------------------------
-        const { vote: voteMode = "STRICT", isGameMode = false } = room.config
+        const { vote: voteMode = "ACTIVE_ONLY", isGameMode = false } = room.config
         console.log("[CAST VOTE] Current Config:", voteMode, isGameMode);
         // // -----------------------------
         // // 5. Apply logic based on mode
@@ -118,15 +119,23 @@ io.on('connection', (socket) => {
         // -----------------------------
         // A. Apply vote mode (ALWAYS)
         // -----------------------------
-        if (voteMode === "STRICT") {
+        // if (voteMode === "ACTIVE_ONLY") {
+        //     votesToCount = {}
+        //     for (const [id, c] of Object.entries(room.voters)) {
+        //         if (io.sockets.sockets.get(id)) {
+        //             votesToCount[c] = (votesToCount[c] || 0) + 1
+        //         }
+        //     }
+        // } else if (voteMode === "ACTIVE_ONLY") {
+        //     votesToCount = {}
+        //     for (const [id, c] of Object.entries(room.voters)) {
+        //         if (!io.sockets.sockets.get(id)) continue
+        //         votesToCount[c] = (votesToCount[c] || 0) + 1
+        //     }
+        // }
+        if (voteMode === "ACTIVE_ONLY") {
             votesToCount = {}
-            for (const [id, c] of Object.entries(room.voters)) {
-                if (io.sockets.sockets.get(id)) {
-                    votesToCount[c] = (votesToCount[c] || 0) + 1
-                }
-            }
-        } else if (voteMode === "ACTIVE_ONLY") {
-            votesToCount = {}
+
             for (const [id, c] of Object.entries(room.voters)) {
                 if (!io.sockets.sockets.get(id)) continue
                 votesToCount[c] = (votesToCount[c] || 0) + 1
@@ -155,19 +164,19 @@ io.on('connection', (socket) => {
             })
         } else {
             // -----------------------------
-            // C. STRICT consensus logic
+            // C. ACTIVE_ONLY consensus logic
             // -----------------------------
             const uniqueColors = Object.keys(votesToCount)
             const totalVotes = Object.values(votesToCount).reduce((a, b) => a + b, 0)
 
             if (
-                voteMode === "STRICT" &&
+                voteMode === "ACTIVE_ONLY" &&
                 uniqueColors.length === 1 &&
                 totalVotes === Object.keys(room.voters).length &&
                 totalVotes > 1
             ) {
                 const winner = uniqueColors[0]
-                console.log("[STRICT] Consensus detected:", winner)
+                console.log("[ACTIVE_ONLY] Consensus detected:", winner)
                 io.to(roomId).emit("consensusReached", winner)
             }
         }

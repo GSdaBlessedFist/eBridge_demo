@@ -21,9 +21,9 @@ function ConfigUI({ redCount, greenCount, blueCount, mode, tenMode, goal, percen
         <div className={styles.uiFrame}>
             <div className={styles.modules}>
                 <div className={styles.moduleInfo}>
-                    <div className={styles.configurationModeSection}>{tenMode ? "STRICT" : currentMode.title}</div>
+                    <div className={styles.configurationModeSection}>{tenMode ? "ACTIVE_ONLY" : currentMode.title}</div>
                     <div className={styles.configurationInfoSection}>
-                        {tenMode ? modeInfo["STRICT"].description : currentMode.description}
+                        {tenMode ? modeInfo["ACTIVE_ONLY"].description : currentMode.description}
                     </div>
                     <div className={styles.configurationDataSection}></div>
                 </div>
