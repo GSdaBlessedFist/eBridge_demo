@@ -18,6 +18,8 @@ import ConfigUI from './ConfigUI'
 import colorMap from './colorMap'
 import { useConfigStore } from '@/stores/useConfigStore'
 import { emit, on } from '@/stores/events/eventBus'
+
+
 export default function Model({ powerOn, setPowerOn, configPanelState, setConfigPanelState, bottomPanelOpen, setBottomPanelOpen }) {
   const { emitUpdateConfig, resetVotes } = usePresentation()
   const group = useRef()
@@ -218,9 +220,8 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
   }
   function handleModeCycle() {
     emit('CONFIG_MODE_CYCLE')
-    console.log("[Socket 187] Emitted configChange:", currentConfigMode)
-    console.log("[Socket 188] Emitted configChange:", isGameMode)
     emitUpdateConfig({
+      roomId: "room-123",
       currentConfigMode: isGameMode ? "ACTIVE_ONLY" : currentConfigMode,             // keep current voteMode
       gameMode: isGameMode // toggle game mode
     })
@@ -229,6 +230,7 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
     const nextGameMode = !isGameMode
     emit("CONFIG_GAME_MODE")
     emitUpdateConfig({
+      roomId: "room-123",
       currentConfigMode: nextGameMode === true ? "ACTIVE_ONLY" : currentConfigMode,             // keep current voteMode
       gameMode: nextGameMode // toggle game mode
     })
@@ -256,7 +258,7 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
       isGameMode ? 3 : 0
   }
   //Config UI
-  const goal = 3
+  const goal = 5
   const redCount = votes.red || 0
   const greenCount = votes.green || 0
   const blueCount = votes.blue || 0
@@ -555,14 +557,19 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
     return off
   }, [actions])
   useEffect(() => {
-    console.log("📡 Syncing config → socket:", currentConfigMode, isGameMode);
 
     emitUpdateConfig({
+      roomId: "room-123",
       currentConfigMode,
       isGameMode
     });
 
+    console.log("📡 Requesting config change:", {
+      voteMode: currentConfigMode,
+      gameMode: isGameMode
+    });
   }, [currentConfigMode, isGameMode, emitUpdateConfig]);
+
   useFrame((state, delta) => {
     const t = state.clock.getElapsedTime()
     // Demo texts
@@ -645,8 +652,8 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
               <group name="configurationModeButton" position={[-0.736, 0, 0.208]} userData={{ name: 'configurationModeButton' }}>
                 <mesh ref={configurationModeButtonRef} name="configurationModeButton_1" castShadow receiveShadow geometry={nodes.configurationModeButton_1.geometry} material={materials.buttonBlack} onClick={(e) => { e.stopPropagation(); handleModeCycle() }} />
                 <mesh name="configurationModeButton_2" castShadow receiveShadow geometry={nodes.configurationModeButton_2.geometry} material={materials.decal_blue} />
-                <mesh name="configurationDecal_ActiveOnly" castShadow receiveShadow geometry={nodes.configurationDecal_ActiveOnly.geometry} material={nodes.configurationDecal_ActiveOnly.material} position={[1.18, 0.961, -1.888]} userData={{ name: 'configurationDecal_ActiveOnly' }} />
-                <mesh name="configurationDecal_Persistent" castShadow receiveShadow geometry={nodes.configurationDecal_Persistent.geometry} material={nodes.configurationDecal_Persistent.material} position={[1.322, 0.961, -1.888]} userData={{ name: 'configurationDecal_Persistent' }} />
+                <mesh name="configurationDecal_ActiveOnly" castShadow receiveShadow geometry={nodes.configurationDecal_ActiveOnly.geometry} material={nodes.configurationDecal_ActiveOnly.material} position={[1.18, 0.971, -1.888]} userData={{ name: 'configurationDecal_ActiveOnly' }} />
+                <mesh name="configurationDecal_Persistent" castShadow receiveShadow geometry={nodes.configurationDecal_Persistent.geometry} material={nodes.configurationDecal_Persistent.material} position={[1.322, 0.971, -1.888]} userData={{ name: 'configurationDecal_Persistent' }} />
                 <mesh name="configurationModeSelectorBase" geometry={nodes.configurationModeSelectorBase.geometry} material={materials.mainBody} position={[1.251, 0.952, -1.794]} userData={{ name: 'configurationModeSelectorBase' }}>
                   <mesh ref={ledRefs.ACTIVE_ONLY} name="configurationModeLED_ACTIVE_ONLY" geometry={nodes.configurationModeLED_ACTIVE_ONLY.geometry} material={materials.configurationModeLED} position={[-0.071, 0.011, -0.009]} userData={{ name: 'configurationModeLED_ACTIVE_ONLY' }} />
                   <mesh ref={ledRefs.PERSISTENT} name="configurationModeLED_PERSISTENT" geometry={nodes.configurationModeLED_PERSISTENT.geometry} material={materials.configurationModeLED} position={[-0.587, -0.952, 1.586]} userData={{ name: 'configurationModeLED_PERSISTENT' }} />

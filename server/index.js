@@ -43,29 +43,106 @@ io.on('connection', (socket) => {
         }
     })
 
-    //Configuration Change
+    // socket.on('configChange', ({ roomId = "room-123", voteMode, gameMode }) => {
+    //     const room = getRoom(roomId)
+
+    //     if (!room) return
+
+    //     // -----------------------------
+    //     // Update config first
+    //     // -----------------------------
+    //     if (voteMode) room.config.vote = voteMode
+
+    //     if (gameMode !== undefined) {
+    //         room.config.isGameMode = gameMode
+    //         room.winner = null
+
+    //         // GameMode always forces ACTIVE_ONLY
+    //         if (gameMode) {
+    //             room.config.vote = "ACTIVE_ONLY"
+    //         }
+    //     }
+
+    //     console.log(`[Config Updated]`, room.config.vote, room.config.isGameMode)
+
+    //     // -----------------------------
+    //     // Emit NEW config FIRST
+    //     // -----------------------------
+    //     io.to(roomId).emit('configUpdated', {
+    //         voteMode: room.config.vote,
+    //         gameMode: room.config.isGameMode
+    //     })
+
+    //     // -----------------------------
+    //     // THEN reset game if needed
+    //     // -----------------------------
+    //     if (gameMode !== undefined) {
+    //         io.to(roomId).emit('gameReset')
+    //     }
+    // })
+
     socket.on('configChange', ({ roomId = "room-123", voteMode, gameMode }) => {
         const room = getRoom(roomId)
-        console.log("ROOM CONFIG TEST:", "voteMode:", voteMode, "isGameMode:", gameMode);
         if (!room) return
 
+        // -----------------------------
+        // Update config first
+        // -----------------------------
         if (voteMode) room.config.vote = voteMode
+
         if (gameMode !== undefined) {
             room.config.isGameMode = gameMode
-
-            // IMPORTANT: switching modes clears previous game result
             room.winner = null
 
-            io.to(roomId).emit('gameReset')
+            // GameMode always forces ACTIVE_ONLY
+            if (gameMode) {
+                room.config.vote = "ACTIVE_ONLY"
+            }
         }
 
         console.log(`[Config Updated]`, room.config.vote, room.config.isGameMode)
 
+        // -----------------------------
+        // Recompute votes immediately (IMPORTANT FIX)
+        // -----------------------------
+        let votesToCount = {}
 
+        const mode = room.config.vote
+
+        if (mode === "ACTIVE_ONLY") {
+            for (const [id, c] of Object.entries(room.voters)) {
+                if (!io.sockets.sockets.get(id)) continue
+                votesToCount[c] = (votesToCount[c] || 0) + 1
+            }
+        } else {
+            // PERSISTENT + STRICT fallback = raw stored votes
+            votesToCount = { ...room.votes }
+        }
+
+        // -----------------------------
+        // Emit UPDATED config first
+        // -----------------------------
         io.to(roomId).emit('configUpdated', {
             voteMode: room.config.vote,
             gameMode: room.config.isGameMode
         })
+
+        // -----------------------------
+        // Emit corrected vote state immediately
+        // -----------------------------
+        io.to(roomId).emit("voteUpdate", {
+            votes: votesToCount,
+            raceVotes: room.votes,
+            percentages: calculatePercentages(room),
+            totalVoters: Object.keys(room.voters).length
+        })
+
+        // -----------------------------
+        // THEN reset game if needed
+        // -----------------------------
+        if (gameMode !== undefined) {
+            io.to(roomId).emit('gameReset')
+        }
     })
 
     /////////////////////////////////////////////////
@@ -147,7 +224,7 @@ io.on('connection', (socket) => {
         // B. Apply GAME MODE (Race)
         // -----------------------------
         if (isGameMode) {
-            const THRESHOLD = 3
+            const THRESHOLD = 5
 
             for (const [color, count] of Object.entries(votesToCount)) {
                 if (count >= THRESHOLD) {
