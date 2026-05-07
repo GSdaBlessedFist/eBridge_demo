@@ -193,23 +193,7 @@ io.on('connection', (socket) => {
 
         let votesToCount = { ...room.votes } //04/15
 
-        // -----------------------------
-        // A. Apply vote mode (ALWAYS)
-        // -----------------------------
-        // if (voteMode === "ACTIVE_ONLY") {
-        //     votesToCount = {}
-        //     for (const [id, c] of Object.entries(room.voters)) {
-        //         if (io.sockets.sockets.get(id)) {
-        //             votesToCount[c] = (votesToCount[c] || 0) + 1
-        //         }
-        //     }
-        // } else if (voteMode === "ACTIVE_ONLY") {
-        //     votesToCount = {}
-        //     for (const [id, c] of Object.entries(room.voters)) {
-        //         if (!io.sockets.sockets.get(id)) continue
-        //         votesToCount[c] = (votesToCount[c] || 0) + 1
-        //     }
-        // }
+
         if (voteMode === "ACTIVE_ONLY") {
             votesToCount = {}
 
@@ -268,7 +252,9 @@ io.on('connection', (socket) => {
             votes: votesToCount,
             raceVotes: room.votes,
             percentages: calculatePercentages(room),
-            totalVoters: Object.keys(room.voters).length
+            totalVoters: Object.keys(room.voters).length,
+            voteMode: room.config.vote,   // 👈 ADD THIS
+            gameMode: room.config.isGameMode // 👈 OPTIONAL BUT USEFUL
         })
     })
     //--------------------------------------------------------

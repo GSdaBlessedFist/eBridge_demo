@@ -1,4 +1,3 @@
-// 2026-04-16 14:40
 "use client"
 
 import { useEffect, useRef, useState } from "react"
@@ -6,7 +5,10 @@ import { io } from "socket.io-client"
 
 export const useVoteSocket = (roomId) => {
     const socketRef = useRef(null)
+
+    // ✅ START NULL (no fake initial state)
     const [voteUpdate, setVoteUpdate] = useState(null)
+
     const [consensus, setConsensus] = useState(null)
     const [consensusReset, setConsensusReset] = useState(false)
 
@@ -17,16 +19,39 @@ export const useVoteSocket = (roomId) => {
 
         socketRef.current.emit("joinPresentation", roomId)
 
+        // =========================
+        // 📊 VOTE UPDATES (snapshot + live)
+        // =========================
         socketRef.current.on("voteUpdate", (payload) => {
-            setVoteUpdate(payload)
+            setVoteUpdate((prev) => ({
+                // ✅ if first payload, just use it
+                ...(prev || {}),
+                ...payload
+            }))
         })
+
+        // =========================
+        // 🏁 CONSENSUS
+        // =========================
         socketRef.current.on("consensusReached", (color) => {
             setConsensus(color)
         })
 
         socketRef.current.on("consensusReset", () => {
-            setConsensus(null)        // clear winner
-            setConsensusReset(true)   // trigger UI reset
+            setConsensus(null)
+            setConsensusReset(true)
+        })
+
+        socketRef.current.on("resetAll", () => {
+            setConsensus(null)
+            setVoteUpdate({
+                votes: { red: 0, green: 0, blue: 0 },
+                raceVotes: { red: 0, green: 0, blue: 0 },
+                percentages: { red: 0, green: 0, blue: 0 },
+                totalVoters: 0,
+                voteMode: "ACTIVE_ONLY",
+                gameMode: false
+            })
         })
 
         return () => {
@@ -35,6 +60,9 @@ export const useVoteSocket = (roomId) => {
         }
     }, [roomId])
 
+    // =========================
+    // 🔄 RESET FLAG CLEANUP
+    // =========================
     useEffect(() => {
         if (!consensusReset) return
 
@@ -45,6 +73,9 @@ export const useVoteSocket = (roomId) => {
         return () => clearTimeout(timeout)
     }, [consensusReset])
 
+    // =========================
+    // 🎯 ACTIONS
+    // =========================
     const castVote = (color) => {
         if (!socketRef.current) return
 
@@ -54,5 +85,10 @@ export const useVoteSocket = (roomId) => {
         })
     }
 
-    return { castVote, voteUpdate, consensus, consensusReset }
+    return {
+        castVote,
+        voteUpdate,
+        consensus,
+        consensusReset
+    }
 }
