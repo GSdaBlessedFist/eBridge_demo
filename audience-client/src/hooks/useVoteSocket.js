@@ -34,6 +34,7 @@ export const useVoteSocket = (roomId) => {
         // 🏁 CONSENSUS
         // =========================
         socketRef.current.on("consensusReached", (color) => {
+            console.log("[consensusReached]", color)
             setConsensus(color)
         })
 
@@ -52,6 +53,11 @@ export const useVoteSocket = (roomId) => {
                 voteMode: "ACTIVE_ONLY",
                 gameMode: false
             })
+        })
+
+        socketRef.current.on("gameWinner", (color) => {
+            console.log("[CLIENT] gameWinner:", color)
+            setConsensus(color)
         })
 
         return () => {

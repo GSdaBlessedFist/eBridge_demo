@@ -14,6 +14,7 @@ export default function VotePage() {
   const displayMode = voteUpdate?.voteMode
   const isGameMode = voteUpdate?.gameMode
 
+
   const optionsMap = [
     { id: "red", label: "A", color: "#FF6B6B" },
     { id: "green", label: "B", color: "#4ECDC4" },
@@ -30,6 +31,8 @@ export default function VotePage() {
     console.log("[page::28: activeTotal]", activeTotal)
     console.log("[page::29: persistentTotal]", persistentTotal)
   }, []);
+
+
 
   const getPercentage = (count, total) =>
     total === 0 ? 0 : Math.round((count / total) * 100)
@@ -74,6 +77,10 @@ export default function VotePage() {
   useEffect(() => {
     //console.log("[page.jsx: 65]: ", voteUpdate)
   }, [voteUpdate]);
+
+  useEffect(() => {
+    console.log("[page consensus]", consensus)
+  }, [consensus])
 
   useEffect(() => {
     if (!consensusReset) return
