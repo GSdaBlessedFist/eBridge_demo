@@ -60,6 +60,11 @@ export const useVoteSocket = (roomId) => {
             setConsensus(color)
         })
 
+        socketRef.current.on("gameReset", () => {
+            setConsensus(null)
+            setConsensusReset(true)
+        })
+
         return () => {
             socketRef.current.disconnect()
             socketRef.current = null

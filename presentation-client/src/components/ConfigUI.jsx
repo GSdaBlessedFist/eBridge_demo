@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import styles from "./configUI.module.scss";
 import modeInfo from "./ configurationInfo";
 import { useConfigStore } from "@/stores/useConfigStore";
@@ -13,13 +13,21 @@ function ConfigUI({ redCount, greenCount, blueCount, mode, tenMode, goal, percen
     const totalVotes = redCount + greenCount + blueCount;
     const winner = options.find(opt => opt.count >= goal);
 
+    const [lowPercentage, setLowPercentage] = useState(null)
+    const [highPercentage, setHighPercentage] = useState(null)
 
     useEffect(() => {
-        console.log(percentages)
+        const lowPerc = Math.round(Math.min(...Object.values(percentages)))
+        setLowPercentage(lowPerc)
+        const hiPerc = Math.round(Math.max(...Object.values(percentages)))
+        setHighPercentage(hiPerc)
     }, [percentages]);
+
     return (<>
         <div className={styles.uiFrame}>
             <div className={styles.modules}>
+
+                {/* INFO MODULE */}
                 <div className={styles.moduleInfo}>
                     <div className={styles.configurationModeSection}>{tenMode ? "ACTIVE_ONLY" : currentMode.title}</div>
                     <div className={styles.configurationInfoSection}>
@@ -27,8 +35,15 @@ function ConfigUI({ redCount, greenCount, blueCount, mode, tenMode, goal, percen
                     </div>
                     <div className={styles.configurationDataSection}></div>
                 </div>
+
+                {/* HERO MODULE */}
                 <div className={styles.moduleHero}>
-                    <div className={styles.heroSpacer}></div>
+                    <div className={styles.heroSpacer}>
+                        <div>
+                            <div>LOW</div>
+                            <div>{lowPercentage < 0 ? 0 : lowPercentage}%</div>
+                        </div>
+                    </div>
                     <div className={styles.centerSection}>
                         <div className={styles.raceToTenSection} style={{ opacity: tenMode ? 1 : 0.4 }}>Race to Ten</div>
                         <div className={styles.visualSection}>
@@ -70,8 +85,16 @@ function ConfigUI({ redCount, greenCount, blueCount, mode, tenMode, goal, percen
                             })}
                         </div>
                     </div>
-                    <div className={styles.heroSpacer}></div>
+                    <div className={styles.heroSpacer}>
+                        <div>
+                            <div>HIGH</div>
+                            <div>{highPercentage < 0 ? 0 : highPercentage}%</div>
+                        </div>
+
+                    </div>
                 </div>
+
+                {/* MODULE RESULTS */}
                 <div className={styles.moduleResults}>
                     <div className={styles.resultsTopSection}>
                         <div className={styles.resultsSpacer}></div>

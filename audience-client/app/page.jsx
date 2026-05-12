@@ -84,7 +84,7 @@ export default function VotePage() {
 
   useEffect(() => {
     if (!consensusReset) return
-    setSelected(null)
+    setSelected(false)
     setVoteStatus(null)
     setPendingVote(null)
     setIsCoolingDown(false)

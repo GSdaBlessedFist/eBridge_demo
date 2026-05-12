@@ -38,8 +38,15 @@
 
 //.moduleHero  19
 .heroSpacer {
-    @apply w-[250px] h-[770px] flex flex-col bg-red-900 opacity-45;
+    @apply w-[250px] h-[770px] flex flex-col justify-center items-center bg-red-950;
 
+    &>div {
+        @apply w-full h-1/3 flex flex-col justify-center items-center text-[70px] font-bold text-red-400;
+    }
+
+    & div:nth-child(2) {
+        @apply my-8 text-[60px];
+    }
 
 }
 
@@ -91,7 +98,7 @@
     @apply w-[495px] h-[646px] flex justify-between items-center border-red-400;
 
     .resultsSpacer {
-        @apply w-[112px] h-[646px] bg-red-900 opacity-40;
+        @apply w-[112px] h-[646px] bg-red-950;
     }
 
     .resultsMain {
