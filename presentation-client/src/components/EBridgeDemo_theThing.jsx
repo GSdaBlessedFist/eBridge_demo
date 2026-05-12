@@ -46,6 +46,13 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
   const isGameMode = useConfigStore((state) => state.isGameMode)
   const winner = useVoteStore((state) => state.winner)
   const isUnlocked = !!winner
+
+  const [systemLightsEmissive, setSystemLightsEmissive] = useState("#8888aa")
+  const systemLightMaterial = new THREE.MeshStandardMaterial({
+    color: '#ffffff',
+    emissive: systemLightsEmissive
+  })
+
   //LIVE METRICS section
   function handleGoto_LiveMetrics() {
     setCamera("metrics")
@@ -183,7 +190,7 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
   }
   function updateSystemLights(intensity, materials) {
     const i = intensity.get()
-    materials.mainBodyGrooveLights.emissiveIntensity = i
+    systemLightMaterial.emissiveIntensity = i
     materials.liveDataLight.emissiveIntensity = i
   }
   function handleShutdown() {
@@ -258,7 +265,7 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
       isGameMode ? 3 : 0
   }
   //Config UI
-  const goal = 5
+  const goal = 10
   const redCount = votes.red || 0
   const greenCount = votes.green || 0
   const blueCount = votes.blue || 0
@@ -307,7 +314,7 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
     })
   }
   function setupInitialEmissives(materials) {
-    materials.mainBodyGrooveLights.emissiveIntensity = 1
+    systemLightMaterial.emissiveIntensity = 0
     materials.liveDataLight.emissiveIntensity = 1
   }
   function setupAnisotropy(materials, gl) {
@@ -495,6 +502,10 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
   useEffect(() => {
     const off = on((event) => {
       console.log("👂 EVENT RECEIVED:", event)
+      if (event.type === "POWER_ON") {
+        systemLightMaterial.emissive = systemLightsEmissive
+        systemLightMaterial.needsUpdate = true
+      }
       if (event.type === "POWER_OFF") {
         setConfigPanelState("closed")
         setPowerOn(false)
@@ -512,7 +523,7 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
         const topAction = actions['Config_Top_Action']
         const bottomPanelAction = actions['Bottom_Hidden_Action']
         const businessCardFlipAction = actions['BusinessCard_flip_Action'];
-        //const shouldReverse = isCardFlipped;
+
         playAction(businessCardFlipAction, true, .35)
 
         if (!topAction) return
@@ -593,8 +604,8 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
             <group name="Module_MainBody" userData={{ name: 'Module_MainBody' }}>
               <group name="mainBody" userData={{ name: 'mainBody' }}>
                 <mesh name="mainBody_1" castShadow receiveShadow geometry={nodes.mainBody_1.geometry} material={materials.mainBody} />
-                <mesh name="mainBody_2" castShadow receiveShadow geometry={nodes.mainBody_2.geometry} material={materials.mainBodyGrooveLights} />
-                <mesh ref={consensusReachedButtonRef} name="mainBody_consensusReachedButton" geometry={nodes.mainBody_consensusReachedButton.geometry} material={materials.liveDataLight}
+                <mesh name="mainBody_2" castShadow receiveShadow geometry={nodes.mainBody_2.geometry} material={systemLightMaterial} />
+                <mesh ref={consensusReachedButtonRef} name="mainBody_consensusReachedButton" geometry={nodes.mainBody_consensusReachedButton.geometry} material={systemLightMaterial}
                   onClick={
                     () => {
                       if (currentCamera !== "config") return
@@ -602,7 +613,7 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
                       triggerConfigAnimation()
                     }}
                 />
-                <mesh ref={bottomHiddenPanelButtonRef} name="mainBody_3" castShadow receiveShadow geometry={nodes.mainBody_3.geometry} material={materials.liveDataLight} onClick={() => openBottomPanel()} />
+                <mesh ref={bottomHiddenPanelButtonRef} name="mainBody_3" castShadow receiveShadow geometry={nodes.mainBody_3.geometry} material={systemLightMaterial} onClick={() => openBottomPanel()} />
                 <group name="dataPort" userData={{ name: 'dataPort' }}>
                   <mesh name="dataPort_1" castShadow receiveShadow geometry={nodes.dataPort_1.geometry} material={materials.mainBody} />
                   <mesh name="dataPort_2" castShadow receiveShadow geometry={nodes.dataPort_2.geometry} material={materials.dataCable} />
@@ -664,7 +675,7 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
               <group name="topHiddenPanel_A" userData={{ name: 'topHiddenPanel_A' }}>
                 <mesh name="topHiddenPanel_A_1" castShadow receiveShadow geometry={nodes.topHiddenPanel_A_1.geometry} material={materials.mainBody} />
                 <mesh name="topHiddenPanel_A_2" castShadow receiveShadow geometry={nodes.topHiddenPanel_A_2.geometry} material={materials.topHidden_screenBlack} />
-                <mesh name="topHiddenPanel_A_3" castShadow receiveShadow geometry={nodes.topHiddenPanel_A_3.geometry} material={materials.mainBodyGrooveLights} />
+                <mesh name="topHiddenPanel_A_3" castShadow receiveShadow geometry={nodes.topHiddenPanel_A_3.geometry} material={systemLightMaterial} />
                 <mesh ref={topHiddenScreenRef} name="topHidden_screen" castShadow receiveShadow geometry={nodes.topHidden_screen.geometry} position={[0, 0, 1.079]} userData={{ name: 'topHidden_screen' }} >
                   <meshStandardMaterial transparent opacity={0.61} roughness={.015} metalness={.91} side={THREE.DoubleSide} />
                   {configPanelState === "open" && currentCamera === "config" && (

@@ -43,44 +43,6 @@ io.on('connection', (socket) => {
         }
     })
 
-    // socket.on('configChange', ({ roomId = "room-123", voteMode, gameMode }) => {
-    //     const room = getRoom(roomId)
-
-    //     if (!room) return
-
-    //     // -----------------------------
-    //     // Update config first
-    //     // -----------------------------
-    //     if (voteMode) room.config.vote = voteMode
-
-    //     if (gameMode !== undefined) {
-    //         room.config.isGameMode = gameMode
-    //         room.winner = null
-
-    //         // GameMode always forces ACTIVE_ONLY
-    //         if (gameMode) {
-    //             room.config.vote = "ACTIVE_ONLY"
-    //         }
-    //     }
-
-    //     console.log(`[Config Updated]`, room.config.vote, room.config.isGameMode)
-
-    //     // -----------------------------
-    //     // Emit NEW config FIRST
-    //     // -----------------------------
-    //     io.to(roomId).emit('configUpdated', {
-    //         voteMode: room.config.vote,
-    //         gameMode: room.config.isGameMode
-    //     })
-
-    //     // -----------------------------
-    //     // THEN reset game if needed
-    //     // -----------------------------
-    //     if (gameMode !== undefined) {
-    //         io.to(roomId).emit('gameReset')
-    //     }
-    // })
-
     socket.on('configChange', ({ roomId = "room-123", voteMode, gameMode }) => {
         const room = getRoom(roomId)
         if (!room) return
@@ -208,7 +170,7 @@ io.on('connection', (socket) => {
         // B. Apply GAME MODE (Race)
         // -----------------------------
         if (isGameMode) {
-            const THRESHOLD = 5
+            const THRESHOLD = 10
 
             for (const [color, count] of Object.entries(votesToCount)) {
                 if (count >= THRESHOLD) {
