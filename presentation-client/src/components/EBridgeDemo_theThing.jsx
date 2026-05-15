@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSpring } from '@react-spring/three'
 import { useGLTF, PerspectiveCamera, useAnimations, Html, Cloud, Text } from '@react-three/drei'
 import { meshStandardMaterial, useFrame, useThree } from '@react-three/fiber'
@@ -18,6 +18,7 @@ import ConfigUI from './ConfigUI'
 import colorMap from './colorMap'
 import { useConfigStore } from '@/stores/useConfigStore'
 import { emit, on } from '@/stores/events/eventBus'
+import { lerp } from 'three/src/math/MathUtils'
 
 
 export default function Model({ powerOn, setPowerOn, configPanelState, setConfigPanelState, bottomPanelOpen, setBottomPanelOpen }) {
@@ -40,6 +41,7 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
   const triggerConfigAnimation = useCameraStore((state) => state.triggerConfigAnimation)
   const [firstClickDone, setFirstClickDone] = useState(false)
   const [assemblyActionProgress, setAssemblyActionProgress] = useState(0);
+  const resetWinner = useVoteStore((state) => state.resetWinner)
   const votes = useVoteStore((state) => state.votes)
   const percentages = useVoteStore((state) => state.percentages)
   const consensusColor = useVoteStore((state) => state.consensusColor)
@@ -47,11 +49,14 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
   const winner = useVoteStore((state) => state.winner)
   const isUnlocked = !!winner
 
-  const [systemLightsEmissive, setSystemLightsEmissive] = useState("#8888aa")
+
+
   const systemLightMaterial = new THREE.MeshStandardMaterial({
-    color: '#ffffff',
-    emissive: systemLightsEmissive
+    color: "#ffffff",
+    emissive: "#8888aa",
+    emissiveIntensity: 0
   })
+
 
   //LIVE METRICS section
   function handleGoto_LiveMetrics() {
@@ -480,6 +485,22 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
   useEffect(() => {
     setupLEDMaterials(ledRefs)
   }, [ledRefs]);
+  useEffect(() => {
+    if (!winner) return;
+    const nextColor = winner
+      ? colorMap[winner]
+      : "#ffffff"
+
+    systemLightMaterial.color.set(nextColor)
+    console.log("systemLightMaterial.color ", systemLightMaterial.color)
+    systemLightMaterial.emissive = new THREE.Color(nextColor)
+    console.log("systemLightMaterial.emissive: ", systemLightMaterial.emissive)
+    systemLightMaterial.needsUpdate = true
+    console.log("🎨 updated system light:", nextColor)
+
+  }, [winner, systemLightMaterial])
+
+
   useLayoutEffect(() => {
     if (!demoTextsRef.current) return
     const PHASE = -0.6
@@ -503,12 +524,13 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
     const off = on((event) => {
       console.log("👂 EVENT RECEIVED:", event)
       if (event.type === "POWER_ON") {
-        systemLightMaterial.emissive = systemLightsEmissive
-        systemLightMaterial.needsUpdate = true
+        // systemLightMaterial.emissiveIntensity = 2
+        // systemLightMaterial.needsUpdate = true
       }
       if (event.type === "POWER_OFF") {
         setConfigPanelState("closed")
         setPowerOn(false)
+        resetWinner()
       }
       if (event.type === "CONFIG_PANEL_OPENED") {
         setConfigPanelState("open")
@@ -581,6 +603,8 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
     });
   }, [currentConfigMode, isGameMode, emitUpdateConfig]);
 
+
+
   useFrame((state, delta) => {
     const t = state.clock.getElapsedTime()
     // Demo texts
@@ -590,6 +614,11 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
     })
     updatePowerButtonGlow(t, materials)
     updateSystemLights(intensity, materials)
+    systemLightMaterial.emissiveIntensity = THREE.MathUtils.lerp(
+      systemLightMaterial.emissiveIntensity,
+      powerOn ? .751 : 0,
+      0.1
+    )
     menuStripeActivate(t)
     updateConfigLEDs()
     updateGameModeLED()
@@ -653,7 +682,7 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
                 <mesh name="mainScreenPort_A_2" castShadow receiveShadow geometry={nodes.mainScreenPort_A_2.geometry} material={materials.socketBlack} />
                 <mesh name="mainScreenIOLights" castShadow receiveShadow geometry={nodes.mainScreenIOLights.geometry} material={materials.mainScreenIOLights} position={[-0.215, 0.957, -0.133]} rotation={[-Math.PI, 0, 0]} scale={[-0.033, -1, -0.127]} userData={{ name: 'mainScreenIOLights' }} />
               </group>
-              <mesh name="returnToMenu_liveMetrics" castShadow receiveShadow geometry={nodes.returnToMenu_liveMetrics.geometry} material={materials.returnToMenuLights} userData={{ name: 'returnToMenu_liveMetrics' }} onClick={() => handleReturn()} />
+              <mesh name="returnToMenu_liveMetrics" castShadow receiveShadow geometry={nodes.returnToMenu_liveMetrics.geometry} material={materials.returnToMenuLights} userData={{ name: 'returnToMenu_liveMetrics' }} onClick={() => (currentCamera === "overview") ? null : handleReturn()} />
               <group name="modeSelectorButton" userData={{ name: 'modeSelectorButton' }}>
                 <mesh name="modeSelectorButton_1" castShadow receiveShadow geometry={nodes.modeSelectorButton_1.geometry} material={materials.buttonBlack} onClick={(e) => { e.stopPropagation(); handleGameMode() }} />
                 <mesh ref={gameModeButtonRef} name="modeSelectorButton_2" castShadow receiveShadow geometry={nodes.modeSelectorButton_2.geometry} >

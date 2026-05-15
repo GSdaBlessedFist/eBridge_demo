@@ -11,6 +11,7 @@ import { PresentationProvider } from "@/context/PresentationContext";
 import { emit } from "@/stores/events/eventBus";
 import { useCameraStore } from "@/stores/useCameraStore";
 import { useConfigStore } from "@/stores/useConfigStore";
+import { useVoteStore } from "@/stores/useVoteStore";
 import { Environment, Html, OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { Leva } from "leva";
@@ -26,6 +27,7 @@ const Page = () => {
   const [bottomPanelOpen, setBottomPanelOpen] = useState(false)
   const currentCamera = useCameraStore((state) => state.currentCamera)
   const setCamera = useCameraStore((state) => state.setCamera)
+
   const triggerResetConfigAnimation = useCameraStore(
     (state) => state.triggerResetConfigAnimation
   )
