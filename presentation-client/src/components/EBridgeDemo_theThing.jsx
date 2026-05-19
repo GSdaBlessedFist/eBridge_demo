@@ -22,7 +22,7 @@ import { lerp } from 'three/src/math/MathUtils'
 
 
 export default function Model({ powerOn, setPowerOn, configPanelState, setConfigPanelState, bottomPanelOpen, setBottomPanelOpen }) {
-  const { emitUpdateConfig, resetVotes } = usePresentation()
+  const { emitUpdateConfig, resetVotes, resetAll } = usePresentation()
   const group = useRef()
   const { scene } = useThree()
   const set = useThree((state) => state.set)
@@ -51,11 +51,18 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
 
 
 
-  const systemLightMaterial = new THREE.MeshStandardMaterial({
-    color: "#ffffff",
-    emissive: "#8888aa",
-    emissiveIntensity: 0
-  })
+  // const systemLightMaterial = new THREE.MeshStandardMaterial({
+  //   color: "#ffffff",
+  //   emissive: "#8888aa",
+  //   emissiveIntensity: 0
+  // })
+  const systemLightMaterial = useMemo(() => {
+    return new THREE.MeshStandardMaterial({
+      color: "#ffffff",
+      emissive: "#8888aa",
+      emissiveIntensity: 0
+    })
+  }, [])
 
 
   //LIVE METRICS section
@@ -127,7 +134,7 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
   function handleReturn() {
     emit("RETURN")
     setPowerOn(true)
-    //emit("CONFIG_PANEL_CLOSED")
+    emit("CONFIG_PANEL_CLOSE_REQUEST")
   }
   function handlePowerOff() {
     setPowerOn(false)
@@ -247,6 +254,7 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
       gameMode: nextGameMode // toggle game mode
     })
     resetVotes("room-123")
+    resetAll("room-123")
   }
   function updateConfigLEDs() {
     Object.keys(ledRefs).forEach((mode) => {
@@ -270,7 +278,7 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
       isGameMode ? 3 : 0
   }
   //Config UI
-  const goal = 10
+  const goal = 2
   const redCount = votes.red || 0
   const greenCount = votes.green || 0
   const blueCount = votes.blue || 0
@@ -285,14 +293,17 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
   }
   //BottomHiddenPanel
   function openBottomPanel() {
+    //if (!isUnlocked) return
+    systemLightMaterial.emissive = colorMap[winner]
     const bottomHiddenPanelAction = actions['Bottom_Hidden_Action']
     const businessCardFollowDrawerAction = actions['BusinessCard_followDrawer_Action']
     businessCardRef.current.visible = true;
-    if (!isUnlocked) return
-    const shouldReverse = bottomPanelOpen
-    playAction(bottomHiddenPanelAction, shouldReverse, 0.281)
-    //playAction(businessCardFollowDrawerAction, shouldReverse, 0.281)
+
+    console.log("BEFORE setBottomPanelOpen: ", bottomPanelOpen)
     setBottomPanelOpen(prev => !prev)
+    console.log("AFTER setBottomPanelOpen:", bottomPanelOpen)
+    const shouldReverse = bottomPanelOpen === true
+    playAction(bottomHiddenPanelAction, shouldReverse, 0.281)
   }
   function businessCardFlip() {
     if (!bottomPanelOpen) return;
@@ -358,7 +369,7 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
   ////////////////////////////////////////////////////////////
   //////////////////////////SPRINGS////////////////////////////
   const { intensity } = useSpring({
-    intensity: powerOn ? 5 : 0.5,
+    intensity: powerOn ? 2.5 : 0.5,
     config: powerOn
       ? { tension: 170, friction: 12 }   // energetic overshoot
       : { tension: 120, friction: 26 }   // damped, no bounce
@@ -485,16 +496,18 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
   useEffect(() => {
     setupLEDMaterials(ledRefs)
   }, [ledRefs]);
+
   useEffect(() => {
     if (!winner) return;
+
     const nextColor = winner
       ? colorMap[winner]
-      : "#ffffff"
+      : "#bbbbbb"
 
-    systemLightMaterial.color.set(nextColor)
-    console.log("systemLightMaterial.color ", systemLightMaterial.color)
-    systemLightMaterial.emissive = new THREE.Color(nextColor)
-    console.log("systemLightMaterial.emissive: ", systemLightMaterial.emissive)
+    console.log("507 nextColor:", nextColor)
+    systemLightMaterial.emissive = nextColor
+    //systemLightMaterial.emissive = new THREE.Color(nextColor)
+    console.log("systemLightMaterial.emissive AFTER winner: ", systemLightMaterial.emissive)
     systemLightMaterial.needsUpdate = true
     console.log("🎨 updated system light:", nextColor)
 
@@ -537,6 +550,7 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
       }
       if (event.type === "CONFIG_PANEL_CLOSE_REQUEST") {
         setConfigPanelState("closing")
+        setTimeout(() => { setConfigPanelState("closed") }, 500)
       }
       if (event.type === "CONFIG_PANEL_CLOSED") {
         setConfigPanelState("closed")
@@ -614,10 +628,12 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
     })
     updatePowerButtonGlow(t, materials)
     updateSystemLights(intensity, materials)
+    const pulse =
+      (0.35 + ((Math.sin(state.clock.elapsedTime * 3) + 5) / 2) * 1.51)
     systemLightMaterial.emissiveIntensity = THREE.MathUtils.lerp(
       systemLightMaterial.emissiveIntensity,
-      powerOn ? .751 : 0,
-      0.1
+      powerOn ? pulse : 0,
+      0.15
     )
     menuStripeActivate(t)
     updateConfigLEDs()
@@ -787,7 +803,7 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
               <group name="bottomHiddenDrawer_A">
                 <mesh name="bottomHiddenDrawer_A_1" geometry={nodes.bottomHiddenDrawer_A_1.geometry} material={materials.mainBody} />
                 <mesh name="bottomHiddenDrawer_A_2" geometry={nodes.bottomHiddenDrawer_A_2.geometry} material={materials.dataPort} />
-                <mesh name="bottomHiddenDrawer_A_3" geometry={nodes.bottomHiddenDrawer_A_3.geometry} material={materials.liveDataLight} />
+                <mesh name="bottomHiddenDrawer_A_3" geometry={nodes.bottomHiddenDrawer_A_3.geometry} material={systemLightMaterial} />
                 <mesh name="bottomHiddenDrawer_A_4" geometry={nodes.bottomHiddenDrawer_A_4.geometry} material={materials.businessCard} />
                 <mesh ref={businessCardRef} name="businessCard" geometry={nodes.businessCard.geometry} material={materials.businessCard} position={[-0.576, 0.53, 1.602]} rotation={[0, 0.221, 0]} visible={false} onClick={() => { if (bottomPanelOpen) businessCardFlip() }} />
               </group>

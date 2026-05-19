@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { on } from './events/eventBus'
 
 export const useVoteStore = create((set) => ({
     votes: {},
@@ -80,3 +81,4 @@ export const useVoteStore = create((set) => ({
             gameMode: false,
         }))
 }))
+

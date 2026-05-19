@@ -59,6 +59,7 @@ io.on('connection', (socket) => {
             // GameMode always forces ACTIVE_ONLY
             if (gameMode) {
                 room.config.vote = "ACTIVE_ONLY"
+                io.emit("resetAll")
             }
         }
 
@@ -170,7 +171,7 @@ io.on('connection', (socket) => {
         // B. Apply GAME MODE (Race)
         // -----------------------------
         if (isGameMode) {
-            const THRESHOLD = 10
+            const THRESHOLD = 2
 
             for (const [color, count] of Object.entries(votesToCount)) {
                 if (count >= THRESHOLD) {

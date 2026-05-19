@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { on } from "./events/eventBus";
+import { useVoteStore } from "./useVoteStore";
 
 const modes = ['ACTIVE_ONLY', 'PERSISTENT']
 
@@ -38,7 +39,11 @@ on((event) => {
                 isGameMode: !state.isGameMode
             }
         })
+        console.log('Winner (BEFORE):', useVoteStore.getState().winner)
+        useVoteStore.getState().resetWinner()
+        console.log('Winner (AFTER):', useVoteStore.getState().winner)
     }
+
     if (event.type === "POWER_OFF") {
         console.log("🔌 POWER_OFF → resetting game mode")
 
