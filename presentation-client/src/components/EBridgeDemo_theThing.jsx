@@ -31,7 +31,7 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
   const { play } = useCameraAnimationController(actions)
   const { gl } = useThree()
   const demoTextsRef = useRef(); // name="DemoTexts"
-  const buttonRefs = [useRef(), useRef(), useRef(), useRef()]
+  const buttonRefs = [useRef(), useRef()]
   const baseYRef = useRef([])
   const phaseRef = useRef([])
   const [hoveredIndex, setHoveredIndex] = useState(null)
@@ -297,22 +297,27 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
     systemLightMaterial.emissive = colorMap[winner]
     const bottomHiddenPanelAction = actions['Bottom_Hidden_Action']
     const businessCardFollowDrawerAction = actions['BusinessCard_followDrawer_Action']
+
     businessCardRef.current.visible = true;
 
     console.log("BEFORE setBottomPanelOpen: ", bottomPanelOpen)
     setBottomPanelOpen(prev => !prev)
     console.log("AFTER setBottomPanelOpen:", bottomPanelOpen)
     const shouldReverse = bottomPanelOpen === true
-    playAction(bottomHiddenPanelAction, shouldReverse, 0.281)
+    if (currentCamera !== "overview") {
+      playAction(bottomHiddenPanelAction, shouldReverse, 0.281)
+    }
   }
   function businessCardFlip() {
     if (!bottomPanelOpen) return;
-    businessCardRef.current.visible = true;
-    const businessCardFlipAction = actions['BusinessCard_flip_Action'];
-    const shouldReverse = isCardFlipped;
-    playAction(businessCardFlipAction, -shouldReverse, .35)
-    //card FLipped
-    setIsCardFlipped(prev => !prev)
+    if (currentCamera !== "overview") {
+      businessCardRef.current.visible = true;
+      const businessCardFlipAction = actions['BusinessCard_flip_Action'];
+      const shouldReverse = isCardFlipped;
+      playAction(businessCardFlipAction, -shouldReverse, .35)
+      //card FLipped
+      setIsCardFlipped(prev => !prev)
+    }
   }
   //SCALE section
   function handleGoto_Scale() {
@@ -336,9 +341,9 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
   function setupAnisotropy(materials, gl) {
     const mats = [
       materials.live_metrics,
-      materials.assembly,
+      // materials.assembly,
       materials.configuration,
-      materials.scale
+      // materials.scale
     ]
     mats.forEach(mat => {
       if (mat.map) {
@@ -542,7 +547,6 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
       }
       if (event.type === "POWER_OFF") {
         setConfigPanelState("closed")
-        setPowerOn(false)
         resetWinner()
       }
       if (event.type === "CONFIG_PANEL_OPENED") {
@@ -809,11 +813,12 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
               </group>
             </group>
             <group name="Module_DemoButtons" userData={{ name: 'Module_DemoButtons' }}>
-              <mesh name="demoButtonsBorder" castShadow receiveShadow geometry={nodes.demoButtonsBorder.geometry} material={materials.socketBlack} userData={{ name: 'demoButtonsBorder' }} />
+              {/* <mesh name="demoButtonsBorder" castShadow receiveShadow geometry={nodes.demoButtonsBorder.geometry} material={materials.socketBlack} userData={{ name: 'demoButtonsBorder' }} /> */}
+              <mesh name="demoButtonsBorder_2only" castShadow receiveShadow geometry={nodes.demoButtonsBorder_2only.geometry} material={materials.socketBlack} userData={{ name: 'demoButtonsBorder_2only' }} />
               <mesh name="demoButton_1" ref={buttonRefs[0]} castShadow receiveShadow geometry={nodes.demoButton_1.geometry} material={materials.demoButton_1} morphTargetDictionary={nodes.demoButton_1.morphTargetDictionary} morphTargetInfluences={nodes.demoButton_1.morphTargetInfluences} position={[-1.533, 0.406, -0.973]} userData={{ targetNames: ['Key 1'], name: 'demoButton_1' }} />
               <mesh name="demoButton_2" ref={buttonRefs[1]} castShadow receiveShadow geometry={nodes.demoButton_2.geometry} material={materials.demoButton_2} morphTargetDictionary={nodes.demoButton_2.morphTargetDictionary} morphTargetInfluences={nodes.demoButton_2.morphTargetInfluences} position={[-1.533, 0.406, -0.476]} userData={{ targetNames: ['Key 1'], name: 'demoButton_2' }} />
-              <mesh name="demoButton_3" ref={buttonRefs[2]} castShadow receiveShadow geometry={nodes.demoButton_3.geometry} material={materials.demoButton_3} morphTargetDictionary={nodes.demoButton_3.morphTargetDictionary} morphTargetInfluences={nodes.demoButton_3.morphTargetInfluences} position={[-1.533, 0.406, 0.02]} userData={{ targetNames: ['Key 1'], name: 'demoButton_3' }} />
-              <mesh name="demoButton_4" ref={buttonRefs[3]} castShadow receiveShadow geometry={nodes.demoButton_4.geometry} material={materials.demoButton_4} morphTargetDictionary={nodes.demoButton_4.morphTargetDictionary} morphTargetInfluences={nodes.demoButton_4.morphTargetInfluences} position={[-1.533, 0.406, 0.517]} userData={{ targetNames: ['Key 1'], name: 'demoButton_4' }} />
+              {/* <mesh name="demoButton_3" ref={buttonRefs[2]} castShadow receiveShadow geometry={nodes.demoButton_3.geometry} material={materials.demoButton_3} morphTargetDictionary={nodes.demoButton_3.morphTargetDictionary} morphTargetInfluences={nodes.demoButton_3.morphTargetInfluences} position={[-1.533, 0.406, 0.02]} userData={{ targetNames: ['Key 1'], name: 'demoButton_3' }} />
+              <mesh name="demoButton_4" ref={buttonRefs[3]} castShadow receiveShadow geometry={nodes.demoButton_4.geometry} material={materials.demoButton_4} morphTargetDictionary={nodes.demoButton_4.morphTargetDictionary} morphTargetInfluences={nodes.demoButton_4.morphTargetInfluences} position={[-1.533, 0.406, 0.517]} userData={{ targetNames: ['Key 1'], name: 'demoButton_4' }} /> */}
               {currentCamera === "assembly" && (
                 <Html position={[-3.0, .2, 1]}>
                   {(() => {
@@ -841,20 +846,20 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
                 onPointerOut={() => setHoveredIndex(null)}
                 onClick={() => handleGoto_LiveMetrics()}
               />
-              <mesh name="demoText_assembly" geometry={nodes.demoText_assembly.geometry} material={materials.assembly}
+              <mesh name="demoText_configuration" geometry={nodes.demoText_configuration.geometry} material={materials.configuration}
+                onPointerOver={() => setHoveredIndex(1)}
+                onPointerOut={() => setHoveredIndex(null)}
+                onClick={() => { handleGoto_Config() }} />
+              {/* <mesh name="demoText_assembly" geometry={nodes.demoText_assembly.geometry} material={materials.assembly}
                 onPointerOver={() => setHoveredIndex(1)}
                 onPointerOut={() => setHoveredIndex(null)}
                 onClick={() => handleGoto_Assembly()}
               />
-              <mesh name="demoText_configuration" geometry={nodes.demoText_configuration.geometry} material={materials.configuration}
-                onPointerOver={() => setHoveredIndex(2)}
-                onPointerOut={() => setHoveredIndex(null)}
-                onClick={() => { handleGoto_Config() }} />
               <mesh name="demoText_scale" geometry={nodes.demoText_scale.geometry} material={materials.scale}
                 onPointerOver={() => setHoveredIndex(3)}
                 onPointerOut={() => setHoveredIndex(null)}
                 onClick={() => handleGoto_Scale()}
-              />
+              /> */}
             </group>
             {currentCamera === 'metrics' &&
               <LiveMetrics nodes={nodes} materials={materials} powerOn={powerOn} />
