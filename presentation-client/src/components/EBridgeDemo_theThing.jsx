@@ -50,12 +50,6 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
   const isUnlocked = !!winner
 
 
-
-  // const systemLightMaterial = new THREE.MeshStandardMaterial({
-  //   color: "#ffffff",
-  //   emissive: "#8888aa",
-  //   emissiveIntensity: 0
-  // })
   const systemLightMaterial = useMemo(() => {
     return new THREE.MeshStandardMaterial({
       color: "#ffffff",
@@ -125,6 +119,7 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
   const [menuStripeActivated, setMenuStripeActivated] = useState(false);
   const menuBGStripeRef = useRef();
   const liveMetricsBGRef = useRef();
+  const liveMetricsBGPanelRef = useRef();
   const underMainBodyCloudPointRef = useRef();
   //--------------------------------------------------------
   function handlePowerOn() {
@@ -501,6 +496,14 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
   useEffect(() => {
     setupLEDMaterials(ledRefs)
   }, [ledRefs]);
+  useEffect(() => {
+    const liveMetricsBGWorldPos = new THREE.Vector3()
+    liveMetricsBGRef.current.getWorldPosition(liveMetricsBGWorldPos)
+    console.log("liveMetricsBGWorldPos: ", liveMetricsBGWorldPos)
+    //liveMetricsBGWorldPos:  Vector3 {x: 0, y: 0, z: 0}
+    console.log("liveMetricsBGRef.current.position: ", liveMetricsBGRef.current.position)
+    //liveMetricsBGRef.current.position:  Vector3 {x: 0, y: 0, z: 0}
+  }, []);
 
   useEffect(() => {
     if (!winner) return;
@@ -874,9 +877,7 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
               <pointLight name="liveMetrics_pinLight" intensity={liveMetrics_pinLightIntensity} decay={2} color={liveMetrics_pinLightColor} position={[3.974, 1.672, -0.618]} rotation={[-2.187, 1.387, 2.195]} userData={{ name: 'liveMetrics_pinLight' }} />
             </group>
             <group name="BG_Extras" userData={{ name: 'BG_Extras' }}>
-              {/* <group ref={underMainBodyCloudPointRef} name="underMainBodyCloud_point" position={[0.4, -1.619, -0.681]} userData={{ name: 'underMainBodyCloud_point' }} >
-                <Cloud opacity={0.07225} speed={0.35713} width={10} depth={25} segments={20} />
-              </group> */}
+
               <group name="menuStripe" position={[1.5, 0, 0]}>
                 {/* <mesh ref={menuBGStripeRef} name="menu_bg_strip" castShadow receiveShadow geometry={nodes.menu_bg_strip.geometry} material={materials.menu_bg_strip} userData={{ name: 'menu_bg_strip' }} /> */}
                 <mesh ref={menuBGStripeRef} name="menu_bg_strip" castShadow receiveShadow geometry={nodes.menu_bg_strip.geometry} userData={{ name: 'menu_bg_strip' }} >
@@ -884,7 +885,9 @@ export default function Model({ powerOn, setPowerOn, configPanelState, setConfig
                 </mesh>
               </group>
               <group ref={liveMetricsBGRef} name="liveMetricsBG" >
-                <mesh name="liveMetrics_bg_panel" receiveShadow geometry={nodes.liveMetrics_bg_panel.geometry} material={materials.liveMetrics_bg_panel} userData={{ name: 'liveMetrics_bg_panel' }} />
+                {/* <mesh ref={liveMetricsBGPanelRef} name="liveMetrics_bg_panel" receiveShadow geometry={nodes.liveMetrics_bg_panel.geometry} material={materials.liveMetrics_bg_panel} userData={{ name: 'liveMetrics_bg_panel' }} /> */}
+
+
                 <group name="liveMetricsTextWrapper" position={[
                   textTransform.position.x,
                   textTransform.position.y,
