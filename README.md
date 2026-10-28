@@ -13,7 +13,7 @@ Developed as a technical demonstration of interactive frontend development, real
 
 ## 🎥 Project Demo
 
-**Watch the demonstration:** [Add demo video link here]
+**Watch the demonstration:** Link coming soon
 
 The video will showcase:
 - Interactive 3D presentation controls.
