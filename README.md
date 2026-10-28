@@ -21,7 +21,6 @@ The video will showcase:
 - Consensus detection and visual feedback.
 - Game-mode winner detection and lighting changes.
 
-*Replace the placeholder above with a link to the recorded demonstration when available.*
 
 ---
 
